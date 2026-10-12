@@ -4,6 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>日本代購購物清單</title>
+
+<!-- 加入主畫面後的 App 外觀 -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<meta name="theme-color" content="#C33A2E" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#15171A" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="代購清單">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="description" content="日本代購的購物清單、訂金流程與對帳工具">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
@@ -56,10 +68,19 @@ button{cursor:pointer}
   background:var(--paper); border-bottom:1px solid var(--rule);
 }
 .wrap{max-width:1100px; margin:0 auto; padding:0 14px}
-.brand{display:flex; align-items:baseline; gap:10px; padding:12px 0 8px}
-.brand h1{margin:0; font-size:17px; font-weight:700; letter-spacing:.01em}
-.brand .sub{font-size:12px; color:var(--ink3)}
-.brand .spacer{flex:1}
+.brand{display:flex; align-items:center; gap:8px; padding:12px 0 8px; min-width:0}
+.brand h1{margin:0; font-size:17px; font-weight:700; letter-spacing:.01em; white-space:nowrap; flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis}
+.brand .sub{font-size:12px; color:var(--ink3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:0 1 auto; min-width:0}
+.brand .spacer{flex:1 1 0; min-width:0}
+.brand .iconbtn{flex:0 0 auto}   /* 按鈕永遠不被壓縮或推出畫面 */
+@media (max-width:620px){
+  .brand h1{font-size:15.5px}
+  .brand .sub{display:none}      /* 匯率在設定頁與檔期列都看得到，這裡讓位給按鈕 */
+  .brand .iconbtn{padding:5px 8px; font-size:12px}
+}
+@media (max-width:380px){
+  .brand h1{font-size:14px}
+}
 .iconbtn{
   background:transparent; border:1px solid var(--rule); border-radius:9px;
   padding:5px 9px; font-size:12.5px; color:var(--ink2);
@@ -564,14 +585,7 @@ textarea.i{resize:vertical; min-height:58px}
 
    填在這裡的好處：手機、電腦打開都自動帶入，不用每台裝置各貼一次。
    =================================================================== */
-const FB_CONFIG_BUILTIN = {
-apiKey: "AIzaSyAxoWsPSPVEVO8BQHiAuXVlLk0Np4bO4fY",
-authDomain: "daigou-6d36b.firebaseapp.com",
-projectId: "daigou-6d36b",
-storageBucket: "daigou-6d36b.firebasestorage.app",
-messagingSenderId: "728344633031",
-appId: "1:728344633031:web:c78c1e746cdafbe34168e2"
-};
+const FB_CONFIG_BUILTIN = null;
 
 const KEY="daigou.jp.v1";
 const DEF_SET={rateReal:0.215, rateSell:0.23, taxRate:10, base:"incl", depositPct:50,
@@ -640,6 +654,16 @@ function paintBackup(){
 }
 function paintBanner(){
   const el=document.getElementById("banner"); if(!el) return;
+  if(fbState==="ready"){            /* 已設定 Firebase 但還沒登入 */
+    el.className="warn";
+    el.innerHTML=`<h4>還沒登入，目前只存在這台裝置</h4>
+      <p>登入後手機和電腦會自動同步。兩台請登入同一個 Google 帳號。</p>
+      <div class="btnrow"><button class="btn primary" id="bnIn">用 Google 登入</button>
+      <button class="btn" id="bnSkip">先不要</button></div>`;
+    document.getElementById("bnIn").onclick=cloudSignIn;
+    document.getElementById("bnSkip").onclick=()=>{ el.className="hide"; el.innerHTML=""; };
+    return;
+  }
   const d=bkAgeDays(), drift=bkDrift();
   let lvl=null, msg="";
   if(S.items.length && d===null){
@@ -1352,23 +1376,7 @@ function renderSettings(){
     S.set.cardFeePct=Math.max(0,+document.getElementById("sFee").value||0);
     S.set.refundMode=document.getElementById("sMode").value;
     cloudSettings();
-    save(); migrateTrips(); rateNote(); render(); paintBackup();
-document.getElementById("bkBtn").onclick=exportBackup;
-document.getElementById("tripSel").onchange=e=>{ S.cur=e.target.value; persist(); render(); };
-document.getElementById("tripNew").onclick=()=>newTrip();
-paintCloud();
-document.getElementById("cloudBtn").onclick=()=>{
-  if(fbState==="ready") cloudSignIn();
-  else document.querySelector('.tab[data-view="settings"]').click();
-};
-/* iPhone 用 Safari 分頁開啟時提醒加入主畫面（只提醒一次） */
-try{
-  const isIOS=/iP(hone|ad|od)/.test(navigator.userAgent);
-  const standalone=window.navigator.standalone===true||window.matchMedia("(display-mode: standalone)").matches;
-  if(isIOS && !standalone && !localStorage.getItem(KEY+".a2hs")){
-    setTimeout(()=>{ toast("建議按分享鈕→加入主畫面，避免 iOS 七天後清掉資料"); localStorage.setItem(KEY+".a2hs","1"); },1500);
-  }
-}catch(e){} renderSettings(); toast("設定已儲存");
+    save(); migrateTrips(); rateNote(); render(); renderSettings(); toast("設定已儲存");
   };
   renderTrips();
   const ta=document.getElementById("tripAdd"); if(ta) ta.onclick=()=>{ newTrip(); renderSettings(); };
@@ -1526,7 +1534,9 @@ function setFbCfg(c){ if(c) localStorage.setItem(FBKEY,JSON.stringify(c)); else 
 const FB_TXT={off:["本機",""],loading:["連線中…",""],ready:["未登入","warn"],
               synced:["已同步","ok"],offline:["離線中","warn"],error:["連線失敗","bad"]};
 function paintCloud(){
-  const b=document.getElementById("cloudBtn"); if(!b) return;
+  const b=document.getElementById("cloudBtn");
+  if(typeof paintBanner==="function") setTimeout(paintBanner,0);
+  if(!b) return;
   const [t,c]=FB_TXT[fbState]||FB_TXT.off;
   b.textContent=t; b.className="iconbtn"+(c?" "+c:"");
   b.title = fbState==="off" ? "尚未設定雲端同步，資料只存在這台裝置"
@@ -1543,6 +1553,11 @@ function cloudInit(){
     const db=F.initializeFirestore(app,{localCache:F.persistentLocalCache({tabManager:F.persistentMultipleTabManager()})});
     const auth=F.getAuth(app);
     FB={F,app,db,auth};
+    F.getRedirectResult(auth).catch(e=>{
+      if(e&&e.code&&!String(e.code).includes("no-auth-event")){
+        console.warn("轉址登入失敗",e); toast("登入沒有完成："+(e.message||e.code));
+      }
+    });
     F.onAuthStateChanged(auth,u=>{
       UID=u?u.uid:null;
       if(UID){ firstSnap=true; startSync(); } else { stopSync(); fbState="ready"; }
@@ -1618,12 +1633,27 @@ async function cloudSettings(){
   if(!UID) return;
   try{ await FB.F.setDoc(FB.F.doc(FB.db,"users",UID,"sys","meta"),{set:S.set,updatedAt:Date.now()}); }catch(e){ console.warn(e); }
 }
+const isStandalone=()=>window.navigator.standalone===true||window.matchMedia("(display-mode: standalone)").matches;
 async function cloudSignIn(){
-  if(!FB){ toast("請先在設定頁貼上 Firebase 設定"); return; }
-  try{ await FB.F.signInWithPopup(FB.auth,new FB.F.GoogleAuthProvider()); }
-  catch(e){
+  if(!FB){ toast("請先設定 Firebase（設定頁或檔案最上方的 FB_CONFIG_BUILTIN）"); return; }
+  const {F,auth}=FB, prov=new F.GoogleAuthProvider();
+  /* 主畫面 App 裡沒有彈出視窗可用，直接走轉址 */
+  if(isStandalone()){
+    toast("前往 Google 登入…");
+    try{ await F.signInWithRedirect(auth,prov); }catch(e){ console.warn(e); toast("登入失敗："+(e.message||e)); }
+    return;
+  }
+  try{
+    await F.signInWithPopup(auth,prov);
+  }catch(e){
     console.warn(e);
-    toast(String(e.code||"").includes("popup") ? "登入視窗被擋住了，請允許彈出視窗後再試" : "登入失敗："+(e.message||e));
+    const c=String(e.code||"");
+    if(c.includes("popup")||c.includes("operation-not-supported")||c.includes("cancelled")){
+      toast("改用轉址方式登入…");
+      try{ await F.signInWithRedirect(auth,prov); }catch(e2){ toast("登入失敗："+(e2.message||e2)); }
+    } else {
+      toast("登入失敗："+(e.message||e));
+    }
   }
 }
 async function cloudSignOut(){ if(FB) try{ await FB.F.signOut(FB.auth); }catch(e){} }
@@ -1651,8 +1681,29 @@ function demo(){
 
 /* ---------- 啟動 ---------- */
 load();
+migrateTrips();
 if(S.set.theme) document.documentElement.setAttribute("data-theme",S.set.theme);
-rateNote(); render();
+rateNote(); render(); paintBackup(); paintCloud();
+
+document.getElementById("bkBtn").onclick=exportBackup;
+document.getElementById("tripSel").onchange=e=>{ S.cur=e.target.value; persist(); render(); };
+document.getElementById("tripNew").onclick=()=>newTrip();
+document.getElementById("cloudBtn").onclick=()=>{
+  if(fbState==="ready") cloudSignIn();
+  else document.querySelector('.tab[data-view="settings"]').click();
+};
+
+/* 設定已經寫在檔案裡時，不必等 fb-ready 之外的動作 */
+if(window.__FB) cloudInit();
+
+/* iPhone 用 Safari 分頁開啟時提醒加入主畫面（只提醒一次） */
+try{
+  const isIOS=/iP(hone|ad|od)/.test(navigator.userAgent);
+  const standalone=window.navigator.standalone===true||window.matchMedia("(display-mode: standalone)").matches;
+  if(isIOS && !standalone && !localStorage.getItem(KEY+".a2hs")){
+    setTimeout(()=>{ toast("建議按分享鈕→加入主畫面，避免 iOS 七天後清掉資料"); localStorage.setItem(KEY+".a2hs","1"); },1500);
+  }
+}catch(e){}
 </script>
 <script type="module">
 /* Firebase 12.19.0 官方 CDN。放在主程式之後，module 預設 defer，所以主程式已經註冊好監聽 */
@@ -1666,7 +1717,9 @@ try{
   window.__FB={
     initializeApp:A.initializeApp,
     getAuth:Au.getAuth, GoogleAuthProvider:Au.GoogleAuthProvider,
-    signInWithPopup:Au.signInWithPopup, signOut:Au.signOut, onAuthStateChanged:Au.onAuthStateChanged,
+    signInWithPopup:Au.signInWithPopup, signInWithRedirect:Au.signInWithRedirect,
+    getRedirectResult:Au.getRedirectResult,
+    signOut:Au.signOut, onAuthStateChanged:Au.onAuthStateChanged,
     initializeFirestore:Fs.initializeFirestore, persistentLocalCache:Fs.persistentLocalCache,
     persistentMultipleTabManager:Fs.persistentMultipleTabManager,
     doc:Fs.doc, setDoc:Fs.setDoc, deleteDoc:Fs.deleteDoc,
