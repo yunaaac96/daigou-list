@@ -116,7 +116,8 @@ button{cursor:pointer}
 
 /* ---------- 統計 ---------- */
 .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--rule); border-bottom:1px solid var(--rule)}
-.stat{background:var(--paper); padding:9px 12px 10px}
+.stat{background:var(--paper); padding:9px 12px 10px; min-width:0}
+.stat .v{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .stat .k{font-size:11px; color:var(--ink3); white-space:nowrap}
 .stat .v{font-size:16px; font-weight:700; line-height:1.3; letter-spacing:-.01em}
 .stat.out .v{color:var(--ink)}
@@ -124,11 +125,18 @@ button{cursor:pointer}
 .stat.in  .v{color:var(--ink)}
 .stat.net .v{color:var(--matcha)}
 @media (max-width:700px){
-  /* 統計改成可左右滑的一列，避免佔掉太多畫面 */
+  /* 手機：可左右滑的一列，避免佔掉太多畫面 */
   .stats{display:flex; overflow-x:auto; scrollbar-width:none; gap:1px}
   .stats::-webkit-scrollbar{display:none}
   .stat{flex:0 0 42%; min-width:132px}
   .stat .v{font-size:15px}
+}
+@media (min-width:1024px){
+  /* 桌機夠寬就排成一列八格，不要拉成兩排稀疏的大格子 */
+  .stats{grid-template-columns:repeat(8,1fr)}
+  .stat{padding:8px 11px 9px}
+  .stat .k{font-size:10.5px}
+  .stat .v{font-size:14.5px; letter-spacing:-.015em}
 }
 
 /* ---------- 篩選 ---------- */
@@ -184,7 +192,7 @@ main{padding:14px 0 100px}
 .item.s-deposit_paid{border-color:color-mix(in srgb,var(--matcha) 45%,var(--rule)); border-width:1.5px}
 
 .body{flex:1; min-width:0; padding:11px 12px 10px}
-.head{display:flex; gap:10px}
+.head{display:flex; gap:10px; padding-right:72px}  /* 右上角狀態標籤的位置，避免壓到品名 */
 .thumb{
   flex:0 0 54px; height:54px; border-radius:9px; background:var(--rule2);
   border:1px solid var(--rule); object-fit:cover; display:block;
@@ -223,7 +231,8 @@ main{padding:14px 0 100px}
 .row.paid .val{color:var(--ink); font-weight:700}
 .row.actual .lab{color:var(--matcha)}
 .row.actual .val{color:var(--matcha); font-weight:700}
-.rate{margin-top:7px; font-size:11px; color:var(--ink3); font-variant-numeric:tabular-nums}
+.rate{margin-top:7px; font-size:11px; color:var(--ink3); font-variant-numeric:tabular-nums;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .rate.diff{color:var(--amber)}
 .row.bal .val{color:var(--shu)}
 .row.total.loss .val{color:var(--shu)}
@@ -241,8 +250,9 @@ main{padding:14px 0 100px}
 
 /* 狀態印章 */
 .stamp{
-  position:absolute; right:10px; top:9px; font-size:10.5px; font-weight:700;
-  padding:2px 7px; border-radius:5px; letter-spacing:.04em;
+  position:absolute; right:10px; top:9px; z-index:1;
+  font-size:10.5px; font-weight:700; line-height:1.5;
+  padding:2px 7px; border-radius:5px; letter-spacing:.02em; white-space:nowrap;
 }
 .item{position:relative}
 .stamp.go{background:var(--matcha); color:var(--card)}
@@ -380,7 +390,7 @@ textarea.i{resize:vertical; min-height:58px}
       <button class="tab" role="tab" aria-selected="false" data-view="settings">設定</button>
     </div>
   </div>
-  <div class="stats" id="stats"></div>
+  <div class="wrap" style="padding:0"><div class="stats" id="stats"></div></div>
   <div class="wrap" id="filterWrap">
     <div class="filters">
       <input id="q" type="search" placeholder="搜尋商品、日文名、備註">
@@ -756,7 +766,7 @@ function cardOf(it){
        <div class="row dep"><span class="lab">${depLab}</span><i class="dots"></i><span class="val num">${twd(m.deposit)}</span></div>
        <div class="row bal"><span class="lab">${balLab}</span><i class="dots"></i><span class="val num">${twd(m.balance)}</span></div>
        <div class="row total ${m.profit<0?"loss":""}"><span class="lab">賺</span><i class="dots"></i><span class="val num">${m.profit<0?"−":"+"}${twd(Math.abs(m.profit))}</span></div>
-       <div class="rate ${RS(it)!==(+S.set.rateSell)?"diff":""}">${it.rateLocked?"🔒":""}本筆匯率 ${RS(it)}　·　下單 ${it.orderDate||"—"}${RS(it)!==(+S.set.rateSell)?`　·　目前 ${S.set.rateSell}`:""}</div>`;
+       <div class="rate ${RS(it)!==(+S.set.rateSell)?"diff":""}" title="本筆匯率 ${RS(it)}／今日 ${S.set.rateSell}">${it.rateLocked?"🔒":""}匯率 ${RS(it)}　·　${it.orderDate||"—"}${RS(it)!==(+S.set.rateSell)?`　·　今日 ${S.set.rateSell}`:""}</div>`;
 
   el.innerHTML=`
     ${stamp}
@@ -1559,7 +1569,8 @@ function parseFbCfg(txt){
 function setFbCfg(c){ if(c) localStorage.setItem(FBKEY,JSON.stringify(c)); else localStorage.removeItem(FBKEY); }
 
 const FB_TXT={off:["本機",""],loading:["連線中…",""],ready:["未登入","warn"],
-              synced:["已同步","ok"],offline:["離線中","warn"],error:["連線失敗","bad"]};
+              syncing:["同步中…","ok"],synced:["已同步","ok"],
+              offline:["離線中","warn"],error:["連線失敗","bad"]};
 function paintCloud(){
   const b=document.getElementById("cloudBtn");
   if(typeof paintBanner==="function") setTimeout(paintBanner,0);
@@ -1627,11 +1638,16 @@ function startSync(){
     if(firstSnap){
       firstSnap=false;
       if(!cloud.length && S.items.length){                 /* 雲端空的：把本機傳上去 */
-        uploadAll(); return;
+        uploadAll().then(()=>{ fbState="synced"; clearTimeout(loadTimer); paintCloud();
+          if(document.getElementById("fbPanel")) renderSettings(); });
+        return;
       }
       if(cloud.length && S.items.length && !sameSet(cloud,S.items)){
         const keepCloud=confirm(`雲端有 ${cloud.length} 筆，這台裝置有 ${S.items.length} 筆，內容不一致。\n\n按「確定」用雲端覆蓋這台；按「取消」把這台的資料也上傳合併。`);
-        if(!keepCloud){ uploadAll(); return; }
+        if(!keepCloud){
+          uploadAll().then(()=>{ fbState="synced"; clearTimeout(loadTimer); paintCloud(); });
+          return;
+        }
       }
     }
     S.items=cloud; persist(); render();
