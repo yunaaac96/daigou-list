@@ -293,6 +293,23 @@ table.lt th{font-size:11px; color:var(--ink3); font-weight:500}
 table.lt td.n{text-align:right; white-space:nowrap}
 
 
+
+.buybar{display:flex; align-items:center; gap:10px; padding:4px 2px 12px; font-size:13px; color:var(--ink2)}
+.buybar .sp{flex:1}
+.buybar b{color:var(--ink); font-size:15px}
+.chk{display:flex; align-items:center; gap:6px; cursor:pointer}
+.brow{display:flex; gap:11px; padding:11px 14px; border-top:1px solid var(--rule2); align-items:flex-start}
+.brow .bq{flex:0 0 46px; font-size:17px; font-weight:700; color:var(--shu); text-align:right; padding-top:1px}
+.brow .bmain{flex:1; min-width:0}
+.brow .bn{font-size:14px; font-weight:700; line-height:1.35; word-break:break-word}
+.brow .bs{font-size:11.5px; color:var(--ink3); margin-top:1px}
+.brow .bw{display:flex; flex-wrap:wrap; gap:4px; margin-top:6px}
+.brow .bact{display:flex; flex-direction:column; gap:5px; flex:0 0 auto}
+@media (max-width:620px){
+  .brow{flex-wrap:wrap}
+  .brow .bact{flex-direction:row; width:100%; padding-left:57px}
+}
+
 /* ---------- 設定頁樣式 ---------- */
 .panel{background:var(--card); border:1px solid var(--rule); border-radius:var(--r); padding:16px; margin-bottom:12px}
 .panel h3{margin:0 0 3px; font-size:15.5px}
@@ -396,6 +413,7 @@ textarea.i{resize:vertical; min-height:58px}
     </div>
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" aria-selected="true" data-view="list">清單<span class="pill hide" id="todoPill">0</span></button>
+      <button class="tab" role="tab" aria-selected="false" data-view="buy">採購</button>
       <button class="tab" role="tab" aria-selected="false" data-view="ledger">對帳</button>
       <button class="tab" role="tab" aria-selected="false" data-view="settings">設定</button>
     </div>
@@ -441,6 +459,7 @@ const firebaseConfig = {
 
 <main class="wrap">
   <div id="viewList"><div class="grid" id="grid"></div></div>
+  <div id="viewBuy" class="hide"></div>
   <div id="viewLedger" class="hide"></div>
   <div id="viewSettings" class="hide"></div>
 </main>
@@ -925,7 +944,7 @@ function syncSelects(){
 /* ---------- 表單 ---------- */
 const sheet=document.getElementById("sheet"), form=document.getElementById("form");
 function fillTripSelect(v){
-  const sel=form.tripId;
+  const sel=form.elements.tripId;
   sel.innerHTML=S.trips.map(t=>`<option value="${t.id}">${esc(t.name)}${t.archived?"（已封存）":""}</option>`).join("");
   if(v) sel.value=v;
   else if(S.cur!=="all") sel.value=S.cur;
@@ -941,24 +960,24 @@ function openSheet(it){
     for(const k of ["nameZh","nameJa","spec","url","qty","kind","customer","store","category","price","state","note"]){
       if(form[k]) form[k].value = it[k] ?? "";
     }
-    form.taxOv.value = (it.taxOv===""||it.taxOv==null)?"":it.taxOv;
-    form.chargeOv.value = (it.chargeOv===""||it.chargeOv==null)?"":it.chargeOv;
-    form.depOv.value = (it.depOv===""||it.depOv==null)?"":it.depOv;
-    form.paidYen.value = (it.paidYen===""||it.paidYen==null)?"":it.paidYen;
-    form.cardTwd.value = (it.cardTwd===""||it.cardTwd==null)?"":it.cardTwd;
-    form.rateSell.value = it.rateSell ?? S.set.rateSell;
-    form.rateReal.value = it.rateReal ?? S.set.rateReal;
-    form.tripId.value = it.tripId || (S.trips[0]&&S.trips[0].id) || "";
-    form.orderDate.value = it.orderDate || today();
+    form.elements.taxOv.value = (it.taxOv===""||it.taxOv==null)?"":it.taxOv;
+    form.elements.chargeOv.value = (it.chargeOv===""||it.chargeOv==null)?"":it.chargeOv;
+    form.elements.depOv.value = (it.depOv===""||it.depOv==null)?"":it.depOv;
+    form.elements.paidYen.value = (it.paidYen===""||it.paidYen==null)?"":it.paidYen;
+    form.elements.cardTwd.value = (it.cardTwd===""||it.cardTwd==null)?"":it.cardTwd;
+    form.elements.rateSell.value = it.rateSell ?? S.set.rateSell;
+    form.elements.rateReal.value = it.rateReal ?? S.set.rateReal;
+    form.elements.tripId.value = it.tripId || (S.trips[0]&&S.trips[0].id) || "";
+    form.elements.orderDate.value = it.orderDate || today();
   }else{
-    form.qty.value=1; form.kind.value="buy"; form.state.value="deposit_wait";
-    form.rateSell.value=defRS(); form.rateReal.value=defRR();
-    form.orderDate.value=today();
+    form.elements.qty.value=1; form.elements.kind.value="buy"; form.elements.state.value="deposit_wait";
+    form.elements.rateSell.value=defRS(); form.elements.rateReal.value=defRR();
+    form.elements.orderDate.value=today();
   }
   syncKind();
   paintImg(); updateCalc();
   sheet.setAttribute("open",""); 
-  setTimeout(()=>form.nameZh.focus(),60);
+  setTimeout(()=>form.elements.nameZh.focus(),60);
 }
 function closeSheet(){ sheet.removeAttribute("open"); editId=null; pendingImg=null; }
 sheet.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeSheet);
@@ -972,7 +991,7 @@ function paintImg(){
 }
 document.getElementById("imgClear").onclick=()=>{pendingImg=null;paintImg();};
 document.getElementById("useNow").onclick=()=>{
-  form.rateSell.value=S.set.rateSell; form.rateReal.value=S.set.rateReal; updateCalc();
+  form.elements.rateSell.value=S.set.rateSell; form.elements.rateReal.value=S.set.rateReal; updateCalc();
 };
 document.getElementById("img").onchange=e=>{
   const f=e.target.files&&e.target.files[0]; if(!f) return;
@@ -993,8 +1012,8 @@ document.getElementById("img").onchange=e=>{
 
 form.addEventListener("input",()=>{syncKind();updateCalc();});
 function syncKind(){
-  const self = form.kind.value==="self", sel=form.state;
-  form.customer.disabled=self; form.depOv.disabled=self; form.chargeOv.disabled=self;
+  const self = form.elements.kind.value==="self", sel=form.elements.state;
+  form.elements.customer.disabled=self; form.elements.depOv.disabled=self; form.elements.chargeOv.disabled=self;
   [...sel.options].forEach(o=>{
     o.hidden = self ? !["todo","bought"].includes(o.value) : o.value==="todo";
   });
@@ -1003,14 +1022,14 @@ function syncKind(){
 }
 function updateCalc(){
   const t={
-    qty:form.qty.value, price:form.price.value, kind:form.kind.value,
-    taxOv:form.taxOv.value===""?null:form.taxOv.value,
-    chargeOv:form.chargeOv.value===""?null:form.chargeOv.value,
-    depOv:form.depOv.value===""?null:form.depOv.value,
-    paidYen:form.paidYen.value===""?null:form.paidYen.value,
-    cardTwd:form.cardTwd.value===""?null:form.cardTwd.value,
-    rateSell:form.rateSell.value===""?null:form.rateSell.value,
-    rateReal:form.rateReal.value===""?null:form.rateReal.value
+    qty:form.elements.qty.value, price:form.elements.price.value, kind:form.elements.kind.value,
+    taxOv:form.elements.taxOv.value===""?null:form.elements.taxOv.value,
+    chargeOv:form.elements.chargeOv.value===""?null:form.elements.chargeOv.value,
+    depOv:form.elements.depOv.value===""?null:form.elements.depOv.value,
+    paidYen:form.elements.paidYen.value===""?null:form.elements.paidYen.value,
+    cardTwd:form.elements.cardTwd.value===""?null:form.elements.cardTwd.value,
+    rateSell:form.elements.rateSell.value===""?null:form.elements.rateSell.value,
+    rateReal:form.elements.rateReal.value===""?null:form.elements.rateReal.value
   };
   const m=calc(t);
   const pRow = m.paid!=null
@@ -1034,6 +1053,10 @@ function updateCalc(){
 form.onsubmit=e=>{
   e.preventDefault();
   const d=Object.fromEntries(new FormData(form).entries());
+  /* 自購時客人／訂金／實收是 disabled，不會出現在 FormData，統一補空字串 */
+  ["nameZh","nameJa","spec","url","qty","kind","customer","store","category",
+   "price","state","note","orderDate","rateSell","rateReal","tripId",
+   "taxOv","chargeOv","depOv","paidYen","cardTwd"].forEach(k=>{ if(d[k]===undefined) d[k]=""; });
   if(editId){
     const old=S.items.find(x=>x.id===editId);
     if(old && old.rateLocked && +d.rateSell!==+old.rateSell){
@@ -1043,10 +1066,11 @@ form.onsubmit=e=>{
   const rec={
     id: editId || (Date.now()+"."+Math.random().toString(36).slice(2,7)),
     ts: editId ? (S.items.find(x=>x.id===editId)||{}).ts || Date.now() : Date.now(),
-    nameZh:d.nameZh.trim(), nameJa:d.nameJa.trim(), spec:d.spec.trim(), url:(d.url||"").trim(),
-    qty:Math.max(1,+d.qty||1), kind:d.kind, customer:d.customer.trim(),
-    store:d.store.trim(), category:d.category.trim(),
-    price:+d.price||0, state:d.state, note:d.note.trim(),
+    nameZh:String(d.nameZh).trim(), nameJa:String(d.nameJa).trim(),
+    spec:String(d.spec).trim(), url:String(d.url).trim(),
+    qty:Math.max(1,+d.qty||1), kind:d.kind||"buy", customer:String(d.customer).trim(),
+    store:String(d.store).trim(), category:String(d.category).trim(),
+    price:+d.price||0, state:d.state||"deposit_wait", note:String(d.note).trim(),
     taxOv: d.taxOv===""?null:+d.taxOv,
     chargeOv: d.chargeOv===""?null:+d.chargeOv,
     depOv: d.depOv===""?null:+d.depOv,
@@ -1252,6 +1276,81 @@ function tripAction(act,id){
   }
 }
 
+
+
+/* ---------- 採購彙總：相同商品合併數量，依店家分組 ---------- */
+let buyOnlyReady=true;
+function buyGroups(){
+  const live=S.items.filter(it=>(S.cur==="all"||it.tripId===S.cur));
+  const pick=buyOnlyReady
+    ? live.filter(it=>it.state==="deposit_paid"||it.state==="todo")
+    : live.filter(it=>!["settled","refunded","unavailable"].includes(it.state));
+  const byStore={};
+  pick.forEach(it=>{
+    const st=it.store||"（未指定店家）";
+    const key=(it.nameZh||"")+"\u0001"+(it.spec||"");
+    byStore[st]=byStore[st]||{};
+    const g=byStore[st][key]=byStore[st][key]||{nameZh:it.nameZh,spec:it.spec,url:it.url,qty:0,ids:[],who:{}};
+    g.qty+=Math.max(1,+it.qty||1);
+    g.ids.push(it.id);
+    if(!g.url && it.url) g.url=it.url;
+    const w=it.kind==="self"?"自購":(it.customer||"未指定");
+    g.who[w]=(g.who[w]||0)+Math.max(1,+it.qty||1);
+  });
+  return byStore;
+}
+function renderBuy(){
+  const box=document.getElementById("viewBuy");
+  const g=buyGroups();
+  const stores=Object.keys(g).sort();
+  let totQty=0, totKind=0;
+  stores.forEach(s=>Object.values(g[s]).forEach(x=>{totQty+=x.qty;totKind++;}));
+  const head=`<div class="buybar">
+    <label class="chk"><input type="checkbox" id="buyOnly" ${buyOnlyReady?"checked":""}> 只看可以買的</label>
+    <span class="sp"></span>
+    <b class="num">${totKind}</b> 種　<b class="num">${totQty}</b> 件</div>`;
+  if(!stores.length){
+    box.innerHTML=head+`<div class="empty"><h3>沒有待採購的商品</h3><p>${buyOnlyReady?"目前沒有「可以買」或「自購待買」的項目。取消上面的勾選可以看全部未結束的商品。":"這個檔期還沒有商品。"}</p></div>`;
+    document.getElementById("buyOnly").onchange=e=>{buyOnlyReady=e.target.checked;renderBuy();};
+    return;
+  }
+  box.innerHTML=head+stores.map(st=>{
+    const rows=Object.values(g[st]).sort((a,b)=>b.qty-a.qty).map(x=>`
+      <div class="brow">
+        <div class="bq num">×${x.qty}</div>
+        <div class="bmain">
+          <div class="bn">${esc(x.nameZh||"未命名")}</div>
+          ${x.spec?`<div class="bs">${esc(x.spec)}</div>`:""}
+          <div class="bw">${Object.entries(x.who).map(([k,v])=>`<span class="tag">${esc(k)} ${v}</span>`).join("")}</div>
+        </div>
+        <div class="bact">
+          ${x.url?`<button class="act go" data-u="${esc(x.url)}">商品頁</button>`:""}
+          <button class="act state" data-done="${x.ids.join(",")}">全部買到了</button>
+        </div>
+      </div>`).join("");
+    const sq=Object.values(g[st]).reduce((a,b)=>a+b.qty,0);
+    return `<section class="ledger">
+      <div class="lhead"><h3>${esc(st)}</h3>
+        <span class="cnt num">${Object.keys(g[st]).length} 種 · ${sq} 件</span>
+        <span class="spacer"></span>
+        <button class="act go" data-map="${esc(st)}">找店家</button></div>
+      ${rows}</section>`;
+  }).join("");
+  document.getElementById("buyOnly").onchange=e=>{buyOnlyReady=e.target.checked;renderBuy();};
+  box.querySelectorAll("[data-map]").forEach(b=>b.onclick=()=>openMap(b.dataset.map));
+  box.querySelectorAll("[data-u]").forEach(b=>b.onclick=()=>window.open(b.dataset.u,"_blank","noopener"));
+  box.querySelectorAll("[data-done]").forEach(b=>b.onclick=()=>{
+    const ids=b.dataset.done.split(",");
+    const list=S.items.filter(x=>ids.includes(x.id));
+    if(!confirm("把這 "+list.length+" 筆標成已購？")) return;
+    list.forEach(it=>{
+      it.state = it.kind==="self" ? "bought" : "bought";
+      it.rateLocked=true; it.depTaken=it.kind!=="self";
+      cloudPut(it);
+    });
+    save(); render(); renderBuy(); toast("已標記 "+list.length+" 筆");
+  });
+}
 
 /* ---------- 批次匯入（CSV／從試算表直接貼） ---------- */
 const IMP_COLS={
@@ -1747,11 +1846,13 @@ document.querySelectorAll(".tab").forEach(t=>{
     document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected",String(x===t)));
     const v=t.dataset.view;
     document.getElementById("viewList").classList.toggle("hide",v!=="list");
+    document.getElementById("viewBuy").classList.toggle("hide",v!=="buy");
     document.getElementById("viewLedger").classList.toggle("hide",v!=="ledger");
     document.getElementById("viewSettings").classList.toggle("hide",v!=="settings");
     document.getElementById("filterWrap").classList.toggle("hide",v!=="list");
-    document.getElementById("stats").classList.toggle("hide",v==="settings");
+    document.getElementById("stats").classList.toggle("hide",v==="settings"||v==="buy");
     document.getElementById("addBtn").classList.toggle("hide",v!=="list");
+    if(v==="buy") renderBuy();
     if(v==="ledger") renderLedger();
     if(v==="settings") renderSettings();
     window.scrollTo({top:0});
