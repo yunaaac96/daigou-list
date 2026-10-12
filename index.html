@@ -307,6 +307,16 @@ input.i,select.i,textarea.i{
   border-radius:9px; padding:9px 10px; font-size:14px;
 }
 textarea.i{resize:vertical; min-height:58px}
+/* 設定頁的說明列：桌機左右對齊，手機改上下排，長句才不會撐破 */
+.panel .row{align-items:flex-start}
+.panel .row .val{white-space:normal; text-align:right; max-width:62%}
+@media (max-width:620px){
+  .panel .row{flex-direction:column; gap:0; line-height:1.55; margin-bottom:9px}
+  .panel .row .dots{display:none}
+  .panel .row .lab{white-space:normal}
+  .panel .row .val{white-space:normal; text-align:left; max-width:100%; font-weight:600}
+  .panel .row.total{border-top:1px solid var(--rule2); padding-top:7px}
+}
 .btnrow{display:flex; flex-wrap:wrap; gap:8px; margin-top:14px}
 .btn{border:1px solid var(--rule); background:var(--card); border-radius:10px; padding:9px 14px; font-size:13.5px}
 .btn.primary{background:var(--shu); border-color:var(--shu); color:#fff; font-weight:500}
@@ -574,7 +584,8 @@ function paintBackup(){
 }
 function paintBanner(){
   const el=document.getElementById("banner"); if(!el) return;
-  if(fbState==="ready"){            /* 已設定 Firebase 但還沒登入 */
+  const signedIn=!!(FB&&FB.auth&&FB.auth.currentUser);
+  if(fbState==="ready" && !signedIn){   /* 已設定 Firebase 但還沒登入 */
     el.className="warn";
     el.innerHTML=`<h4>還沒登入，目前只存在這台裝置</h4>
       <p>登入後手機和電腦會自動同步。兩台請登入同一個 Google 帳號。</p>
@@ -1280,9 +1291,10 @@ function renderSettings(){
       </div>
       <div id="fbActions" class="${fbCfg()?"":"hide"}" style="margin-top:12px">
         <div class="btnrow">
-          <button class="btn primary" id="fbIn">用 Google 登入</button>
-          <button class="btn" id="fbOut">登出</button>
-          <button class="btn" id="fbUp">把這台的資料上傳</button>
+          <button class="btn primary ${(FB&&FB.auth&&FB.auth.currentUser)?"hide":""}" id="fbIn">用 Google 登入</button>
+          <button class="btn ${(FB&&FB.auth&&FB.auth.currentUser)?"":"hide"}" id="fbOut">登出</button>
+          <button class="btn ${(FB&&FB.auth&&FB.auth.currentUser)?"":"hide"}" id="fbUp">把這台的資料上傳</button>
+          <button class="btn ${(FB&&FB.auth&&FB.auth.currentUser)?"":"hide"}" id="fbDown">從雲端重新取回</button>
           <button class="btn" id="fbDiag">診斷連線</button>
           <span style="flex:1"></span>
           <button class="btn danger" id="fbClear">清掉本機設定</button>
@@ -1424,7 +1436,28 @@ function renderSettings(){
   bind("fbDiag",runDiag);
   bind("fbIn",cloudSignIn);
   bind("fbOut",async()=>{ await cloudSignOut(); renderSettings(); toast("已登出，改為只存本機"); });
-  bind("fbUp",async()=>{ if(!UID){ toast("請先登入"); return; } await uploadAll(); });
+  bind("fbUp",async()=>{
+    if(!UID){ toast("請先登入"); return; }
+    if(!confirm("把這台的 "+S.items.length+" 筆資料上傳到雲端？\n雲端同 id 的資料會被覆蓋。")) return;
+    await uploadAll(); renderSettings();
+  });
+  bind("fbDown",async()=>{
+    if(!UID){ toast("請先登入"); return; }
+    try{
+      const {F,db}=FB;
+      const [qi,qt]=await Promise.all([
+        F.getDocs(F.collection(db,"users",UID,"items")),
+        F.getDocs(F.collection(db,"users",UID,"trips"))
+      ]);
+      if(!qi.size){ toast("雲端目前沒有商品資料"); return; }
+      if(!confirm("用雲端的 "+qi.size+" 筆取代這台目前的 "+S.items.length+" 筆？")) return;
+      S.items=qi.docs.map(x=>x.data());
+      if(qt.size) S.trips=qt.docs.map(x=>x.data());
+      migrateTrips(); persist(); rateNote(); render(); renderSettings();
+      fbState="synced"; paintCloud();
+      toast("已取回 "+S.items.length+" 筆");
+    }catch(e){ noteErr("取回資料",e); toast("取回失敗："+(e.code||e.message)); }
+  });
   bind("fbClear",()=>{
     if(!confirm("清掉這台裝置貼的設定？\n（寫在 HTML 檔裡的設定不受影響，會改用那一份）")) return;
     setFbCfg(null); location.reload();
@@ -1531,7 +1564,7 @@ function rateNote(){
    沒設定或沒登入時，整個工具就是純本機版，功能不受影響。
    設定後：Firestore 的離線快取會在沒網路時先存本機，連上網自動補傳。 */
 let FB=null, UID=null, unsubItems=null, unsubMeta=null, unsubTrips=null, firstSnap=true, fbState="off";
-let lastErr="", loadTimer=null;
+let lastErr="", loadTimer=null, fallbackTimer=null, gotSnap=false;
 function noteErr(where,e){
   lastErr=where+"："+(e&&(e.code||e.message)||e||"未知錯誤");
   console.warn(where,e);
@@ -1617,12 +1650,25 @@ function cloudInit(){
   }
 }
 function stopSync(){
+  clearTimeout(fallbackTimer);
   if(unsubItems){unsubItems();unsubItems=null;}
   if(unsubMeta){unsubMeta();unsubMeta=null;}
   if(unsubTrips){unsubTrips();unsubTrips=null;}
 }
 function startSync(){
-  const {F,db}=FB; stopSync();
+  const {F,db}=FB; stopSync(); gotSnap=false;
+  clearTimeout(fallbackTimer);
+  fallbackTimer=setTimeout(async()=>{      /* 監聽沒回來就改用一次性讀取補救 */
+    if(gotSnap) return;
+    try{
+      const qs=await F.getDocs(F.collection(db,"users",UID,"items"));
+      const cloud=qs.docs.map(x=>x.data());
+      if(cloud.length){ S.items=cloud; persist(); render(); }
+      else if(S.items.length){ await uploadAll(); }
+      gotSnap=true; clearTimeout(loadTimer); fbState="synced"; paintCloud();
+      if(document.getElementById("fbPanel")) renderSettings();
+    }catch(e){ noteErr("補抓資料",e); fbState="error"; paintCloud(); }
+  },6000);
   unsubMeta=F.onSnapshot(F.doc(db,"users",UID,"sys","meta"),snap=>{
     if(snap.exists()){ const d=snap.data(); if(d&&d.set){ S.set={...DEF_SET,...d.set}; rateNote(); } }
   },e=>noteErr("讀取設定",e));
@@ -1651,25 +1697,52 @@ function startSync(){
       }
     }
     S.items=cloud; persist(); render();
-    fbState = snap.metadata.fromCache ? "offline" : "synced";
+    gotSnap=true; clearTimeout(loadTimer); clearTimeout(fallbackTimer);
+    fbState = (snap.metadata.fromCache && navigator.onLine===false) ? "offline" : "synced";
     paintCloud();
+    if(document.getElementById("fbPanel")) renderSettings();
   },e=>{ noteErr("讀取商品資料",e); fbState="error"; paintCloud();
          if(document.getElementById("fbPanel")) renderSettings(); });
 }
 const sameSet=(a,b)=>a.length===b.length && a.every(x=>b.some(y=>y.id===x.id));
+/* Firestore 不接受 undefined，也有單筆 1MB 上限，寫入前先整理乾淨 */
+function clean(o){
+  const r={};
+  for(const k in o){ const v=o[k]; if(v!==undefined) r[k]=v; }
+  return r;
+}
+function tooBig(o){
+  try{ return new Blob([JSON.stringify(o)]).size > 900*1024; }catch(e){ return false; }
+}
 async function uploadAll(){
   if(!UID) return;
   const {F,db}=FB;
-  try{
-    for(const t of S.trips) await F.setDoc(F.doc(db,"users",UID,"trips",t.id),t);
-    for(const it of S.items) await F.setDoc(F.doc(db,"users",UID,"items",it.id),it);
-    await cloudSettings();
-    toast("已上傳 "+S.items.length+" 筆到雲端");
-  }catch(e){ console.warn(e); toast("上傳失敗："+(e.message||e)); }
+  let okT=0, okI=0; const fail=[];
+  for(const t of S.trips){
+    try{ await F.setDoc(F.doc(db,"users",UID,"trips",t.id),clean(t)); okT++; }
+    catch(e){ fail.push("檔期「"+(t.name||t.id)+"」："+(e.code||e.message)); }
+  }
+  for(const it of S.items){
+    let body=clean(it);
+    if(tooBig(body)){ body={...body,img:null}; fail.push("「"+(it.nameZh||it.id)+"」圖片太大，已改以無圖上傳"); }
+    try{ await F.setDoc(F.doc(db,"users",UID,"items",it.id),body); okI++; }
+    catch(e){ fail.push("「"+(it.nameZh||it.id)+"」："+(e.code||e.message)); }
+  }
+  try{ await cloudSettings(); }catch(e){ fail.push("設定："+(e.code||e.message)); }
+  if(fail.length){
+    lastErr="上傳問題 "+fail.length+" 項｜"+fail.slice(0,4).join("　/　");
+    toast("上傳 "+okI+"/"+S.items.length+" 筆，有 "+fail.length+" 項問題，請按「診斷連線」查看");
+  }else{
+    toast("已上傳 "+okI+" 筆商品、"+okT+" 個檔期");
+  }
+  return {okI,okT,fail};
 }
 async function cloudPut(it){
   if(!UID||!it) return;
-  try{ await FB.F.setDoc(FB.F.doc(FB.db,"users",UID,"items",it.id),it); }catch(e){ console.warn(e); }
+  let body=clean(it);
+  if(tooBig(body)) body={...body,img:null};
+  try{ await FB.F.setDoc(FB.F.doc(FB.db,"users",UID,"items",it.id),body); }
+  catch(e){ noteErr("上傳「"+(it.nameZh||it.id)+"」",e); toast("這筆沒上傳成功："+(e.code||e.message)); }
 }
 async function cloudDel(id){
   if(!UID||!id) return;
@@ -1677,7 +1750,8 @@ async function cloudDel(id){
 }
 async function cloudPutTrip(t){
   if(!UID||!t) return;
-  try{ await FB.F.setDoc(FB.F.doc(FB.db,"users",UID,"trips",t.id),t); }catch(e){ console.warn(e); }
+  try{ await FB.F.setDoc(FB.F.doc(FB.db,"users",UID,"trips",t.id),clean(t)); }
+  catch(e){ noteErr("上傳檔期「"+(t.name||t.id)+"」",e); }
 }
 async function cloudDelTrip(id){
   if(!UID||!id) return;
@@ -1685,7 +1759,8 @@ async function cloudDelTrip(id){
 }
 async function cloudSettings(){
   if(!UID) return;
-  try{ await FB.F.setDoc(FB.F.doc(FB.db,"users",UID,"sys","meta"),{set:S.set,updatedAt:Date.now()}); }catch(e){ console.warn(e); }
+  try{ await FB.F.setDoc(FB.F.doc(FB.db,"users",UID,"sys","meta"),{set:clean(S.set),updatedAt:Date.now()}); }
+  catch(e){ noteErr("上傳設定",e); throw e; }
 }
 const isStandalone=()=>window.navigator.standalone===true||window.matchMedia("(display-mode: standalone)").matches;
 
@@ -1705,16 +1780,29 @@ async function runDiag(){
   const u=FB&&FB.auth&&FB.auth.currentUser;
   put("6 登入狀態", u ? "✓ "+(u.email||u.uid) : "✗ 尚未登入");
   put("7 同步狀態", fbState);
-  if(lastErr) put("8 最後錯誤", "⚠ "+lastErr);
-  if(!FB||!u){ put("結論","先把上面打叉的項目處理掉"); return; }
+  if(!FB||!u){ if(lastErr) put("最後錯誤","⚠ "+lastErr); put("結論","先把上面打叉的項目處理掉"); return; }
+  put("8 使用者 ID", u.uid);
   put("9 讀寫測試", "執行中…");
   try{
     const {F,db}=FB;
-    const ref=F.doc(db,"users",u.uid,"sys","diag");
-    await F.setDoc(ref,{at:new Date().toISOString()});
-    const snap=await ref.get ? null : null;
+    await F.setDoc(F.doc(db,"users",u.uid,"sys","diag"),{at:new Date().toISOString()});
     put("9 讀寫測試", "✓ 成功，Firestore 正常");
-    put("結論", "連線沒問題。若畫面仍顯示連線中，請重新整理一次。");
+    const [qi,qt]=await Promise.all([
+      F.getDocs(F.collection(db,"users",u.uid,"items")),
+      F.getDocs(F.collection(db,"users",u.uid,"trips"))
+    ]);
+    put("10 雲端商品", qi.size+" 筆");
+    put("11 雲端檔期", qt.size+" 個");
+    put("12 本機商品", S.items.length+" 筆");
+    if(qi.size===0 && S.items.length>0)
+      put("結論","雲端是空的，資料還沒上傳。請按上面的「把這台的資料上傳」。");
+    else if(qi.size>0 && S.items.length===0)
+      put("結論","雲端有資料但這台沒抓下來。請按上面的「從雲端重新取回」。");
+    else if(qi.size!==S.items.length)
+      put("結論","雲端 "+qi.size+" 筆、本機 "+S.items.length+" 筆不一致，請擇一方向覆蓋。");
+    else
+      put("結論","雲端與本機一致，同步正常。");
+    if(lastErr) put("最後錯誤","⚠ "+lastErr);
   }catch(e){
     const code=String(e&&e.code||"");
     put("9 讀寫測試", "✗ "+(e.code||e.message));
