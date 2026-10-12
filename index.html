@@ -558,9 +558,13 @@ function load(){
     }
   }catch(e){ console.warn("讀取失敗",e); }
 }
-function save(){
+/* 只寫入本機，不更動備份提醒狀態（雲端同步下來時用） */
+function persist(){
   try{ localStorage.setItem(KEY,JSON.stringify(S)); }
   catch(e){ toast("儲存空間已滿，請先刪除幾張商品圖或匯出備份"); }
+}
+function save(){
+  persist();
   paintBackup();
 }
 
@@ -1301,7 +1305,7 @@ function renderSettings(){
         </div>
       </div>
       <pre id="fbDiagOut" class="hide" style="margin:12px 0 0; padding:11px 12px; background:var(--paper); border:1px solid var(--rule); border-radius:9px; font-size:11.5px; line-height:1.7; white-space:pre-wrap; word-break:break-all"></pre>
-      <p class="hint" style="margin:12px 0 0">登入後手機和電腦會即時同步。沒網路時照常操作，Firestore 會把異動排隊，連上網自動補傳。</p>
+      <p class="hint" style="margin:12px 0 0">登入後手機和電腦會即時同步。沒網路時照常操作，Firestore 會把異動排隊，連上網自動補傳。${cacheMode==="memory"?"<br><b style='color:var(--amber)'>這台裝置的離線快取無法使用</b>，已改用線上模式：有網路時一切正常，沒網路時無法同步（本機清單仍可操作）。":""}</p>
     </section>
 
     <section class="panel">
@@ -1613,7 +1617,39 @@ function paintCloud(){
   b.title = fbState==="off" ? "尚未設定雲端同步，資料只存在這台裝置"
           : fbState==="ready" ? "點一下用 Google 登入開始同步" : "點一下開啟同步設定";
 }
-function cloudInit(){
+let cacheMode="unknown", retried=false;
+/* iOS Safari 在隱私模式、儲存受限或主畫面 App 等情況下可能無法使用 IndexedDB，
+   這時 Firestore 的離線快取會初始化失敗，連帶所有讀取都失敗。先測一次再決定。 */
+function idbUsable(){
+  return new Promise(res=>{
+    try{
+      if(!window.indexedDB) return res(false);
+      const req=indexedDB.open("daigou_idb_probe");
+      const done=v=>{ try{ if(req.result) req.result.close(); indexedDB.deleteDatabase("daigou_idb_probe"); }catch(e){} res(v); };
+      req.onsuccess=()=>done(true);
+      req.onerror=()=>done(false);
+      req.onblocked=()=>done(false);
+      setTimeout(()=>done(false),2000);
+    }catch(e){ res(false); }
+  });
+}
+/* 快取層出問題時，用一個獨立的 app 實例改走記憶體快取再試一次 */
+async function retryWithMemoryCache(e){
+  if(retried || cacheMode==="memory" || !FB) return;
+  const msg=String((e&&(e.code||e.message))||"").toLowerCase();
+  if(!/precondition|unimplemented|indexeddb|persistence|internal|unavailable/.test(msg)) return;
+  retried=true;
+  try{
+    const F=window.__FB, cfg=fbCfg();
+    const app2=F.initializeApp(cfg,"memfallback");
+    const db2=F.initializeFirestore(app2,{experimentalAutoDetectLongPolling:true});
+    FB={F,app:app2,db:db2,auth:FB.auth};
+    cacheMode="memory"; lastErr+="（已自動改用記憶體快取重試）";
+    toast("離線快取不可用，已改用線上模式");
+    startSync();
+  }catch(err){ noteErr("改用記憶體快取",err); }
+}
+async function cloudInit(){
   const cfg=fbCfg();
   if(!cfg){ fbState="off"; paintCloud(); return; }
   if(!window.__FB){ fbState="error"; paintCloud(); return; }
@@ -1621,7 +1657,16 @@ function cloudInit(){
   try{
     fbState="loading"; paintCloud();
     const app=F.initializeApp(cfg);
-    const db=F.initializeFirestore(app,{localCache:F.persistentLocalCache({tabManager:F.persistentMultipleTabManager()})});
+    const idbOk=await idbUsable();
+    cacheMode = idbOk ? "persistent" : "memory";
+    const opts = idbOk
+      ? {localCache:F.persistentLocalCache({tabManager:F.persistentMultipleTabManager()}),
+         experimentalAutoDetectLongPolling:true}
+      : {experimentalAutoDetectLongPolling:true};
+    let db;
+    try{ db=F.initializeFirestore(app,opts); }
+    catch(e){ noteErr("建立快取("+cacheMode+")",e); cacheMode="memory";
+              db=F.initializeFirestore(app,{experimentalAutoDetectLongPolling:true}); }
     const auth=F.getAuth(app);
     FB={F,app,db,auth};
     F.getRedirectResult(auth).catch(e=>{
@@ -1667,7 +1712,9 @@ function startSync(){
       else if(S.items.length){ await uploadAll(); }
       gotSnap=true; clearTimeout(loadTimer); fbState="synced"; paintCloud();
       if(document.getElementById("fbPanel")) renderSettings();
-    }catch(e){ noteErr("補抓資料",e); fbState="error"; paintCloud(); }
+    }catch(e){ noteErr("補抓資料",e); fbState="error"; paintCloud();
+               if(document.getElementById("fbPanel")) renderSettings();
+               retryWithMemoryCache(e); }
   },6000);
   unsubMeta=F.onSnapshot(F.doc(db,"users",UID,"sys","meta"),snap=>{
     if(snap.exists()){ const d=snap.data(); if(d&&d.set){ S.set={...DEF_SET,...d.set}; rateNote(); } }
@@ -1702,7 +1749,8 @@ function startSync(){
     paintCloud();
     if(document.getElementById("fbPanel")) renderSettings();
   },e=>{ noteErr("讀取商品資料",e); fbState="error"; paintCloud();
-         if(document.getElementById("fbPanel")) renderSettings(); });
+         if(document.getElementById("fbPanel")) renderSettings();
+         retryWithMemoryCache(e); });
 }
 const sameSet=(a,b)=>a.length===b.length && a.every(x=>b.some(y=>y.id===x.id));
 /* Firestore 不接受 undefined，也有單筆 1MB 上限，寫入前先整理乾淨 */
@@ -1780,6 +1828,8 @@ async function runDiag(){
   const u=FB&&FB.auth&&FB.auth.currentUser;
   put("6 登入狀態", u ? "✓ "+(u.email||u.uid) : "✗ 尚未登入");
   put("7 同步狀態", fbState);
+  put("7b 本機快取", cacheMode==="persistent" ? "✓ 離線快取可用"
+      : cacheMode==="memory" ? "⚠ 記憶體快取（線上正常，沒網路時不能同步）" : "未知");
   if(!FB||!u){ if(lastErr) put("最後錯誤","⚠ "+lastErr); put("結論","先把上面打叉的項目處理掉"); return; }
   put("8 使用者 ID", u.uid);
   put("9 讀寫測試", "執行中…");
