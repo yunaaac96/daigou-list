@@ -1,0 +1,5 @@
+{
+  "projects": {
+    "default": "daigou-6d36b"
+  }
+}
