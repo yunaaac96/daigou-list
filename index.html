@@ -1312,7 +1312,7 @@ function importRows(text,dryRun){
   const map=mapHeader(rows[0]);
   if(map.nameZh===undefined) return {err:"找不到「商品名稱」欄位，請確認標題列"};
   if(map.price===undefined) return {err:"找不到「單價」欄位，請確認標題列"};
-  const out=[], warn=[];
+  const out=[], warn=[], seenTrip=new Set();
   const num=v=>{ const n=parseFloat(String(v??"").replace(/[^\d.-]/g,"")); return isNaN(n)?null:n; };
   const get=(r,k)=>map[k]===undefined?"":String(r[map[k]]??"").trim();
   rows.slice(1).forEach((r,idx)=>{
@@ -1327,7 +1327,7 @@ function importRows(text,dryRun){
       let t=S.trips.find(x=>x.name===tn);
       if(!t && !dryRun){ t={id:newId("t"),name:tn,start:"",end:"",rateSell:null,rateReal:null,note:"",archived:false}; S.trips.push(t); cloudPutTrip(t); }
       if(t) tripId=t.id;
-      else if(dryRun) warn.push("第 "+line+" 列：會新建檔期「"+tn+"」");
+      else if(dryRun && !seenTrip.has(tn)){ seenTrip.add(tn); warn.push("會新建檔期「"+tn+"」"); }
     }
     const kindRaw=get(r,"kind");
     const kind=/自購|自用|自己/.test(kindRaw)?"self":"buy";
@@ -1353,6 +1353,18 @@ function importRows(text,dryRun){
     });
   });
   return {items:out, warn};
+}
+/* Excel 在繁中 Windows 預設存成 Big5，用 UTF-8 讀會整片亂碼，所以要先試幾種 */
+function decodeCsv(buf){
+  const tries=[["utf-8",true],["big5",false],["gb18030",false],["shift_jis",false]];
+  for(const [enc,fatal] of tries){
+    try{
+      const t=new TextDecoder(enc,fatal?{fatal:true}:undefined).decode(buf);
+      if(fatal) return {text:t,enc:"UTF-8"};
+      if(!t.includes("\uFFFD")) return {text:t,enc:enc.toUpperCase()};
+    }catch(e){}
+  }
+  return {text:new TextDecoder("utf-8").decode(buf),enc:"UTF-8（可能有缺字）"};
 }
 function impTemplate(){
   const head=["檔期","商品名稱","日文名稱","規格","數量","類型","客人","店家","類別","單價","狀態","下單日期","代購匯率","備註"];
@@ -1626,13 +1638,23 @@ function renderSettings(){
   if(icf) icf.onchange=e=>{
     const f=e.target.files&&e.target.files[0]; if(!f) return;
     const fr=new FileReader();
-    fr.onload=()=>{ ib().value=fr.result; showImp("已讀取檔案，請按「檢查內容」。"); };
-    fr.readAsText(f,"utf-8");
+    fr.onload=()=>{
+      const {text,enc}=decodeCsv(fr.result);
+      ib().value=text;
+      const q=(text.match(/\?{3,}/g)||[]).length;
+      showImp("已讀取檔案（編碼："+enc+"）"
+        +(enc!=="UTF-8"?"\n⚠ 這個檔案不是 UTF-8。中文可以正常讀取，但日文假名在存檔時就已經變成問號，無法還原。":"")
+        +(q?"\n⚠ 偵測到 "+q+" 處連續問號，多半是日文被編碼破壞。建議改用「直接從試算表複製貼上」，就不會有這個問題。":"")
+        +"\n\n請按「檢查內容」。");
+    };
+    fr.readAsArrayBuffer(f);
   };
   bind("impCheck",()=>{
     const r=importRows(ib().value,true);
     if(r.err){ showImp("✗ "+r.err); return; }
     const by={}; r.items.forEach(i=>{by[i.customer||"（未指定）"]=(by[i.customer||"（未指定）"]||0)+1;});
+    const brokenJa=r.items.filter(i=>/\?{3,}/.test(i.nameJa||"")).length;
+    if(brokenJa) r.warn.push("有 "+brokenJa+" 筆的日文名稱是問號（編碼已損壞），匯入後地圖搜尋會改用中文名。");
     showImp("✓ 可以匯入 "+r.items.length+" 筆\n"
       +"客人分布："+Object.entries(by).map(([k,v])=>k+" "+v+" 筆").join("、")
       +(r.warn.length?"\n\n提醒：\n"+r.warn.join("\n"):"")
