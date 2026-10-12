@@ -547,6 +547,32 @@ textarea.i{resize:vertical; min-height:58px}
 
 <script>
 "use strict";
+/* ===================================================================
+   【要用雲端同步才需要填這裡；不填的話就是純本機版，功能一樣能用】
+
+   把 Firebase 給你的 firebaseConfig 貼進下面的大括號裡，取代 null。
+   貼好之後長這樣：
+
+   const FB_CONFIG_BUILTIN = {
+     apiKey: "AIza...",
+     authDomain: "你的專案.firebaseapp.com",
+     projectId: "你的專案",
+     storageBucket: "你的專案.firebasestorage.app",
+     messagingSenderId: "123456789",
+     appId: "1:123456789:web:abcdef"
+   };
+
+   填在這裡的好處：手機、電腦打開都自動帶入，不用每台裝置各貼一次。
+   =================================================================== */
+const FB_CONFIG_BUILTIN = {
+apiKey: "AIzaSyAxoWsPSPVEVO8BQHiAuXVlLk0Np4bO4fY",
+authDomain: "daigou-6d36b.firebaseapp.com",
+projectId: "daigou-6d36b",
+storageBucket: "daigou-6d36b.firebasestorage.app",
+messagingSenderId: "728344633031",
+appId: "1:728344633031:web:c78c1e746cdafbe34168e2"
+};
+
 const KEY="daigou.jp.v1";
 const DEF_SET={rateReal:0.215, rateSell:0.23, taxRate:10, base:"incl", depositPct:50,
                cardFeePct:1.5, refundMode:"store", theme:""};
@@ -1350,8 +1376,11 @@ try{
   if(fh){
     const u=FB&&FB.auth&&FB.auth.currentUser;
     fh.innerHTML = !fbCfg()
-      ? "還沒設定。設定後手機與電腦會自動同步；不設定也能用，只是資料只存在這台裝置。"
+      ? "還沒設定。你可以在下面貼上設定，或直接把設定寫進 HTML 檔最上方的 FB_CONFIG_BUILTIN（寫在檔案裡的話每台裝置都會自動帶入）。不設定也能用，只是資料只存在這台裝置。"
       : fbState==="error" ? "<b style='color:var(--shu)'>連線失敗</b>：設定可能貼錯，或這個網域還沒加到 Firebase 的授權清單。"
+      : (!localStorage.getItem(FBKEY)&&FB_CONFIG_BUILTIN) ? (FB&&FB.auth&&FB.auth.currentUser
+          ? `使用<b>檔案內建設定</b>，已登入 <b>${esc(FB.auth.currentUser.email||"")}</b>，同步中。`
+          : "使用<b>檔案內建設定</b>，尚未登入。按下方「用 Google 登入」開始同步。")
       : !u ? "已載入設定，<b style='color:var(--amber)'>尚未登入</b>。按下方「用 Google 登入」開始同步。"
       : `已登入 <b>${esc(u.email||u.displayName||"")}</b>，${fbState==="offline"?"<b style='color:var(--amber)'>目前離線</b>，異動會先排隊":"同步中"}。`;
   }
@@ -1472,7 +1501,13 @@ function rateNote(){
    設定後：Firestore 的離線快取會在沒網路時先存本機，連上網自動補傳。 */
 let FB=null, UID=null, unsubItems=null, unsubMeta=null, unsubTrips=null, firstSnap=true, fbState="off";
 const FBKEY=KEY+".fbcfg";
-function fbCfg(){ try{ return JSON.parse(localStorage.getItem(FBKEY)||"null"); }catch(e){ return null; } }
+function fbCfg(){
+  try{
+    const v=JSON.parse(localStorage.getItem(FBKEY)||"null");
+    if(v&&v.apiKey) return v;
+  }catch(e){}
+  return (FB_CONFIG_BUILTIN&&FB_CONFIG_BUILTIN.apiKey)?FB_CONFIG_BUILTIN:null;
+}
 /* Firebase 給的是 JS 物件寫法（key 沒引號），所以不能只靠 JSON.parse。
    這裡改成直接把需要的欄位抽出來，整段程式碼貼進來也能用。 */
 function parseFbCfg(txt){
