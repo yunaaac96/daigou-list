@@ -293,7 +293,7 @@ table.lt th{font-size:11px; color:var(--ink3); font-weight:500}
 table.lt td.n{text-align:right; white-space:nowrap}
 
 
-/* ---------- 設定 ---------- */
+/* ---------- 設定頁樣式 ---------- */
 .panel{background:var(--card); border:1px solid var(--rule); border-radius:var(--r); padding:16px; margin-bottom:12px}
 .panel h3{margin:0 0 3px; font-size:15.5px}
 .panel .hint{margin:0 0 14px; font-size:12.5px; color:var(--ink3)}
@@ -1244,6 +1244,130 @@ function tripAction(act,id){
   }
 }
 
+
+/* ---------- 批次匯入（CSV／從試算表直接貼） ---------- */
+const IMP_COLS={
+  nameZh:["商品名稱","中文名稱","中文名","品名","名稱"],
+  nameJa:["日文名稱","日文名","日文"],
+  spec:["規格","尺寸","規格尺寸","容量"],
+  qty:["數量","件數"],
+  kind:["類型","代購自購","代購/自購"],
+  customer:["客人","客戶","訂購人"],
+  store:["店家","商店","購買地點"],
+  category:["類別","分類"],
+  price:["單價","當地單價","日幣單價","價格","標價"],
+  state:["狀態"],
+  orderDate:["下單日期","日期"],
+  rateSell:["代購匯率"],
+  rateReal:["實際匯率"],
+  taxOv:["退稅","退稅金額"],
+  chargeOv:["實收","代購實收"],
+  depOv:["訂金"],
+  paidYen:["實付","實付日幣"],
+  cardTwd:["刷卡","刷卡帳單"],
+  note:["備註","說明"],
+  tripName:["檔期","行程"]
+};
+const IMP_STATE={"待收訂金":"deposit_wait","等訂金":"deposit_wait","未收訂金":"deposit_wait",
+  "可以買":"deposit_paid","已收訂金":"deposit_paid",
+  "已購":"bought","待收尾款":"bought","已買":"bought",
+  "已結清":"settled","結清":"settled",
+  "買不到":"unavailable","缺貨":"unavailable",
+  "已退訂金":"refunded",
+  "待買":"todo","自購待買":"todo"};
+
+/* 支援逗號或 Tab 分隔、引號包住的欄位、換行與 BOM */
+function parseTable(text){
+  text=text.replace(/^\uFEFF/,"").replace(/\r\n?/g,"\n").trim();
+  if(!text) return [];
+  const head=text.split("\n")[0];
+  const sep=(head.split("\t").length>head.split(",").length)?"\t":",";
+  const rows=[]; let row=[], cell="", q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){
+      if(c==='"'){ if(text[i+1]==='"'){ cell+='"'; i++; } else q=false; }
+      else cell+=c;
+    } else if(c==='"'){ q=true; }
+    else if(c===sep){ row.push(cell); cell=""; }
+    else if(c==="\n"){ row.push(cell); rows.push(row); row=[]; cell=""; }
+    else cell+=c;
+  }
+  row.push(cell); rows.push(row);
+  return rows.filter(r=>r.some(x=>String(x).trim()!==""));
+}
+function mapHeader(cells){
+  const map={};
+  cells.forEach((raw,i)=>{
+    const h=String(raw).trim().replace(/[\s()（）*＊:：]/g,"");
+    for(const key in IMP_COLS){
+      if(IMP_COLS[key].some(a=>h===a||h.startsWith(a))){ map[key]=i; break; }
+    }
+  });
+  return map;
+}
+function importRows(text,dryRun){
+  const rows=parseTable(text);
+  if(rows.length<2) return {err:"至少要有標題列和一列資料"};
+  const map=mapHeader(rows[0]);
+  if(map.nameZh===undefined) return {err:"找不到「商品名稱」欄位，請確認標題列"};
+  if(map.price===undefined) return {err:"找不到「單價」欄位，請確認標題列"};
+  const out=[], warn=[];
+  const num=v=>{ const n=parseFloat(String(v??"").replace(/[^\d.-]/g,"")); return isNaN(n)?null:n; };
+  const get=(r,k)=>map[k]===undefined?"":String(r[map[k]]??"").trim();
+  rows.slice(1).forEach((r,idx)=>{
+    const line=idx+2;
+    const nameZh=get(r,"nameZh");
+    if(!nameZh) return;
+    const price=num(get(r,"price"));
+    if(price===null){ warn.push("第 "+line+" 列：單價不是數字，略過"); return; }
+    let tripId=S.cur!=="all"?S.cur:(S.trips[0]&&S.trips[0].id)||"";
+    const tn=get(r,"tripName");
+    if(tn){
+      let t=S.trips.find(x=>x.name===tn);
+      if(!t && !dryRun){ t={id:newId("t"),name:tn,start:"",end:"",rateSell:null,rateReal:null,note:"",archived:false}; S.trips.push(t); cloudPutTrip(t); }
+      if(t) tripId=t.id;
+      else if(dryRun) warn.push("第 "+line+" 列：會新建檔期「"+tn+"」");
+    }
+    const kindRaw=get(r,"kind");
+    const kind=/自購|自用|自己/.test(kindRaw)?"self":"buy";
+    let st=IMP_STATE[get(r,"state")] || (kind==="self"?"todo":"deposit_wait");
+    if(kind==="self" && !["todo","bought"].includes(st)) st="todo";
+    const tObj=S.trips.find(x=>x.id===tripId);
+    const defSell=(tObj&&tObj.rateSell!=null&&tObj.rateSell!=="")?tObj.rateSell:S.set.rateSell;
+    const defReal=(tObj&&tObj.rateReal!=null&&tObj.rateReal!=="")?tObj.rateReal:S.set.rateReal;
+    out.push({
+      id:newId("i"), ts:Date.now()-out.length, tripId,
+      nameZh, nameJa:get(r,"nameJa"), spec:get(r,"spec"),
+      qty:Math.max(1,Math.round(num(get(r,"qty"))||1)),
+      kind, customer:kind==="self"?"":get(r,"customer"),
+      store:get(r,"store"), category:get(r,"category"),
+      price, state:st, note:get(r,"note"),
+      orderDate:get(r,"orderDate")||today(),
+      rateSell:num(get(r,"rateSell"))??defSell,
+      rateReal:num(get(r,"rateReal"))??defReal,
+      rateLocked:!["deposit_wait","todo"].includes(st),
+      depTaken:["deposit_paid","bought","settled","unavailable"].includes(st),
+      taxOv:num(get(r,"taxOv")), chargeOv:num(get(r,"chargeOv")), depOv:num(get(r,"depOv")),
+      paidYen:num(get(r,"paidYen")), cardTwd:num(get(r,"cardTwd")), img:null
+    });
+  });
+  return {items:out, warn};
+}
+function impTemplate(){
+  const head=["檔期","商品名稱","日文名稱","規格","數量","類型","客人","店家","類別","單價","狀態","下單日期","代購匯率","備註"];
+  const rows=[
+    ["2026/10 東京","樂敦 肌研極潤 化妝水","肌ラボ 極潤 化粧水","170mL","3","代購","小美","マツモトキヨシ","藥妝","880","待收訂金",today(),"0.232","指定無香料"],
+    ["2026/10 東京","DHC 維他命 C","DHC ビタミンC","60 日份","4","代購","阿姨","マツモトキヨシ","保健","760","可以買","","",""],
+    ["2026/10 東京","白色戀人","白い恋人","24 枚入","1","自購","","新千歳空港","食品","1620","待買","","",""]
+  ];
+  const csv=[head,...rows].map(r=>r.map(c=>/[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c).join(",")).join("\n");
+  const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download="代購清單_匯入範本.csv"; a.click();
+  URL.revokeObjectURL(a.href); toast("範本已下載，用 Excel 或 Google 試算表開啟");
+}
+
 /* ---------- 設定 ---------- */
 function renderSettings(){
   const s=S.set;
@@ -1287,6 +1411,7 @@ function renderSettings(){
     <section class="panel" id="fbPanel">
       <h3>雲端同步（Firebase）</h3>
       <p class="hint" id="fbHint"></p>
+      <div id="fbWarn" class="hide" style="background:color-mix(in srgb,var(--amber) 12%,var(--card)); border:1px solid var(--amber); border-radius:9px; padding:11px 12px; font-size:12px; line-height:1.75; margin-bottom:12px"></div>
       <div id="fbSetup">
         <label class="f"><span class="lb">貼上 Firebase 設定 <em>　專案設定 → 一般 → 您的應用程式 → firebaseConfig。整段程式碼直接貼也可以</em></span>
           <textarea class="i" id="fbCfgBox" rows="6" placeholder='把 Firebase 的 firebaseConfig 整段貼進來，例如：&#10;const firebaseConfig = {&#10;  apiKey: "AIza...",&#10;  authDomain: "xxx.firebaseapp.com",&#10;  projectId: "xxx",&#10;  ...&#10;};' style="font-size:12px; font-family:ui-monospace,monospace"></textarea>
@@ -1306,6 +1431,22 @@ function renderSettings(){
       </div>
       <pre id="fbDiagOut" class="hide" style="margin:12px 0 0; padding:11px 12px; background:var(--paper); border:1px solid var(--rule); border-radius:9px; font-size:11.5px; line-height:1.7; white-space:pre-wrap; word-break:break-all"></pre>
       <p class="hint" style="margin:12px 0 0">登入後手機和電腦會即時同步。沒網路時照常操作，Firestore 會把異動排隊，連上網自動補傳。${cacheMode==="memory"?"<br><b style='color:var(--amber)'>這台裝置的離線快取無法使用</b>，已改用線上模式：有網路時一切正常，沒網路時無法同步（本機清單仍可操作）。":""}</p>
+    </section>
+
+    <section class="panel">
+      <h3>批次匯入</h3>
+      <p class="hint">在 Excel 或 Google 試算表裡整批打好，存成 CSV 上傳，或直接複製整片儲存格貼進下面的框。必填只有「商品名稱」和「單價」，其餘留白會自動帶預設值。</p>
+      <div class="btnrow" style="margin-top:0">
+        <button class="btn" id="impTpl">下載範本</button>
+        <label class="btn" style="display:inline-block">選擇 CSV 檔<input type="file" id="impCsv" accept=".csv,text/csv" class="hide"></label>
+      </div>
+      <textarea class="i" id="impBox" rows="5" placeholder="從試算表複製整片儲存格（含標題列）貼到這裡" style="margin-top:10px; font-size:12px; font-family:ui-monospace,monospace"></textarea>
+      <div class="btnrow" style="margin-top:10px">
+        <button class="btn" id="impCheck">檢查內容</button>
+        <span style="flex:1"></span>
+        <button class="btn primary" id="impGo">確認匯入</button>
+      </div>
+      <pre id="impOut" class="hide" style="margin:12px 0 0; padding:11px 12px; background:var(--paper); border:1px solid var(--rule); border-radius:9px; font-size:11.5px; line-height:1.7; white-space:pre-wrap"></pre>
     </section>
 
     <section class="panel">
@@ -1407,6 +1548,17 @@ function renderSettings(){
   };
   renderTrips();
   const ta=document.getElementById("tripAdd"); if(ta) ta.onclick=()=>{ newTrip(); renderSettings(); };
+  const fw=document.getElementById("fbWarn");
+  if(fw){
+    const u0=FB&&FB.auth&&FB.auth.currentUser;
+    if(!u0 && (redirFailed || (isStandalone()&&fbCfg()))){
+      fw.classList.remove("hide");
+      fw.innerHTML="<b>主畫面 App 可能無法完成 Google 登入。</b>"
+        +"你的網站在 "+location.hostname+"，Firebase 的登入處理在另一個網域，iOS 的跨站防護會擋住憑證傳回。<br>"
+        +"<b>暫時可行的作法：</b>改用 Safari 直接開這個網址登入與同步（主畫面 App 仍可離線記帳，但兩者資料不互通）。<br>"
+        +"<b>根本解法：</b>把網站改放到 Firebase Hosting，網域就會和登入處理同源，問題會完全消失。";
+    } else fw.classList.add("hide");
+  }
   const fh=document.getElementById("fbHint");
   if(fh){
     const src=cfgSource();
@@ -1465,6 +1617,38 @@ function renderSettings(){
   bind("fbClear",()=>{
     if(!confirm("清掉這台裝置貼的設定？\n（寫在 HTML 檔裡的設定不受影響，會改用那一份）")) return;
     setFbCfg(null); location.reload();
+  });
+
+  const ib=()=>document.getElementById("impBox"), io=()=>document.getElementById("impOut");
+  const showImp=t=>{ const o=io(); o.classList.remove("hide"); o.textContent=t; };
+  bind("impTpl",impTemplate);
+  const icf=document.getElementById("impCsv");
+  if(icf) icf.onchange=e=>{
+    const f=e.target.files&&e.target.files[0]; if(!f) return;
+    const fr=new FileReader();
+    fr.onload=()=>{ ib().value=fr.result; showImp("已讀取檔案，請按「檢查內容」。"); };
+    fr.readAsText(f,"utf-8");
+  };
+  bind("impCheck",()=>{
+    const r=importRows(ib().value,true);
+    if(r.err){ showImp("✗ "+r.err); return; }
+    const by={}; r.items.forEach(i=>{by[i.customer||"（未指定）"]=(by[i.customer||"（未指定）"]||0)+1;});
+    showImp("✓ 可以匯入 "+r.items.length+" 筆\n"
+      +"客人分布："+Object.entries(by).map(([k,v])=>k+" "+v+" 筆").join("、")
+      +(r.warn.length?"\n\n提醒：\n"+r.warn.join("\n"):"")
+      +"\n\n確認無誤請按「確認匯入」。");
+  });
+  bind("impGo",()=>{
+    const chk=importRows(ib().value,true);
+    if(chk.err){ showImp("✗ "+chk.err); return; }
+    if(!chk.items.length){ showImp("✗ 沒有可匯入的資料"); return; }
+    if(!confirm("匯入 "+chk.items.length+" 筆？會加在現有清單後面，不會覆蓋既有資料。")) return;
+    const r=importRows(ib().value,false);
+    S.items=r.items.concat(S.items);
+    save(); rateNote(); render();
+    r.items.forEach(i=>cloudPut(i));
+    ib().value=""; showImp("✓ 已匯入 "+r.items.length+" 筆");
+    renderSettings(); toast("已匯入 "+r.items.length+" 筆");
   });
 
   document.getElementById("expBtn").onclick=exportBackup;
@@ -1617,7 +1801,7 @@ function paintCloud(){
   b.title = fbState==="off" ? "尚未設定雲端同步，資料只存在這台裝置"
           : fbState==="ready" ? "點一下用 Google 登入開始同步" : "點一下開啟同步設定";
 }
-let cacheMode="unknown", retried=false;
+let cacheMode="unknown", retried=false, redirFailed=false;
 /* iOS Safari 在隱私模式、儲存受限或主畫面 App 等情況下可能無法使用 IndexedDB，
    這時 Firestore 的離線快取會初始化失敗，連帶所有讀取都失敗。先測一次再決定。 */
 function idbUsable(){
@@ -1669,10 +1853,19 @@ async function cloudInit(){
               db=F.initializeFirestore(app,{experimentalAutoDetectLongPolling:true}); }
     const auth=F.getAuth(app);
     FB={F,app,db,auth};
-    F.getRedirectResult(auth).catch(e=>{
-      if(e&&e.code&&!String(e.code).includes("no-auth-event")){
-        console.warn("轉址登入失敗",e); toast("登入沒有完成："+(e.message||e.code));
+    const pending=localStorage.getItem(KEY+".redir");
+    F.getRedirectResult(auth).then(r=>{
+      if(r&&r.user){ localStorage.removeItem(KEY+".redir"); return; }
+      if(pending && !auth.currentUser){
+        localStorage.removeItem(KEY+".redir");
+        lastErr="轉址登入沒有帶回登入狀態"+(isStandalone()?"（主畫面 App ＋ 跨網域的已知限制）":"");
+        redirFailed=true;
+        setTimeout(()=>{ if(document.getElementById("fbPanel")) renderSettings(); },300);
       }
+    }).catch(e=>{
+      localStorage.removeItem(KEY+".redir");
+      noteErr("轉址登入",e); redirFailed=true;
+      setTimeout(()=>{ if(document.getElementById("fbPanel")) renderSettings(); },300);
     });
     clearTimeout(loadTimer);
     loadTimer=setTimeout(()=>{            /* 超過 12 秒還在連線中就當作失敗，不要一直轉 */
@@ -1870,19 +2063,17 @@ async function cloudSignIn(){
   if(!FB){ toast("請先設定 Firebase（設定頁貼上，或填 HTML 最上方的 fb-config 區塊）"); return; }
   const {F,auth}=FB, prov=new F.GoogleAuthProvider();
   /* 主畫面 App 裡沒有彈出視窗可用，直接走轉址 */
-  if(isStandalone()){
-    toast("前往 Google 登入…");
-    try{ await F.signInWithRedirect(auth,prov); }catch(e){ console.warn(e); toast("登入失敗："+(e.message||e)); }
-    return;
-  }
   try{
-    await F.signInWithPopup(auth,prov);
+    await F.signInWithPopup(auth,prov);   /* 部分 iOS 版本的主畫面 App 也支援，先試 */
   }catch(e){
     console.warn(e);
     const c=String(e.code||"");
     if(c.includes("popup")||c.includes("operation-not-supported")||c.includes("cancelled")){
       toast("改用轉址方式登入…");
-      try{ await F.signInWithRedirect(auth,prov); }catch(e2){ toast("登入失敗："+(e2.message||e2)); }
+      try{
+        localStorage.setItem(KEY+".redir",String(Date.now()));
+        await F.signInWithRedirect(auth,prov);
+      }catch(e2){ localStorage.removeItem(KEY+".redir"); toast("登入失敗："+(e2.message||e2)); }
     } else {
       toast("登入失敗："+(e.message||e));
     }
