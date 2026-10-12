@@ -496,7 +496,7 @@ textarea.i{resize:vertical; min-height:58px}
      這裡是純文字區塊，就算貼錯格式也不會讓頁面壞掉。
      =================================================================== -->
 <script type="text/plain" id="fb-config">
-{
+  const firebaseConfig = {
   apiKey: "AIzaSyAxoWsPSPVEVO8BQHiAuXVlLk0Np4bO4fY",
   authDomain: "daigou-6d36b.firebaseapp.com",
   projectId: "daigou-6d36b",
@@ -1273,10 +1273,12 @@ function renderSettings(){
           <button class="btn primary" id="fbIn">用 Google 登入</button>
           <button class="btn" id="fbOut">登出</button>
           <button class="btn" id="fbUp">把這台的資料上傳</button>
+          <button class="btn" id="fbDiag">診斷連線</button>
           <span style="flex:1"></span>
-          <button class="btn danger" id="fbClear">移除 Firebase 設定</button>
+          <button class="btn danger" id="fbClear">清掉本機設定</button>
         </div>
       </div>
+      <pre id="fbDiagOut" class="hide" style="margin:12px 0 0; padding:11px 12px; background:var(--paper); border:1px solid var(--rule); border-radius:9px; font-size:11.5px; line-height:1.7; white-space:pre-wrap; word-break:break-all"></pre>
       <p class="hint" style="margin:12px 0 0">登入後手機和電腦會即時同步。沒網路時照常操作，Firestore 會把異動排隊，連上網自動補傳。</p>
     </section>
 
@@ -1409,6 +1411,7 @@ function renderSettings(){
     if(!c){ toast("讀不出 apiKey 或 projectId，請把 Firebase 那段設定完整貼進來"); return; }
     setFbCfg(c); toast("已儲存，正在連線…"); setTimeout(()=>location.reload(),600);
   });
+  bind("fbDiag",runDiag);
   bind("fbIn",cloudSignIn);
   bind("fbOut",async()=>{ await cloudSignOut(); renderSettings(); toast("已登出，改為只存本機"); });
   bind("fbUp",async()=>{ if(!UID){ toast("請先登入"); return; } await uploadAll(); });
@@ -1518,6 +1521,11 @@ function rateNote(){
    沒設定或沒登入時，整個工具就是純本機版，功能不受影響。
    設定後：Firestore 的離線快取會在沒網路時先存本機，連上網自動補傳。 */
 let FB=null, UID=null, unsubItems=null, unsubMeta=null, unsubTrips=null, firstSnap=true, fbState="off";
+let lastErr="", loadTimer=null;
+function noteErr(where,e){
+  lastErr=where+"："+(e&&(e.code||e.message)||e||"未知錯誤");
+  console.warn(where,e);
+}
 const FBKEY=KEY+".fbcfg";
 function builtinCfgText(){
   const e=document.getElementById("fb-config");
@@ -1577,14 +1585,23 @@ function cloudInit(){
         console.warn("轉址登入失敗",e); toast("登入沒有完成："+(e.message||e.code));
       }
     });
+    clearTimeout(loadTimer);
+    loadTimer=setTimeout(()=>{            /* 超過 12 秒還在連線中就當作失敗，不要一直轉 */
+      if(fbState==="loading"||fbState==="syncing"){
+        if(!lastErr) lastErr="連線逾時：Firestore 沒有回應，最常見原因是資料庫還沒建立";
+        fbState="error"; paintCloud();
+        if(document.getElementById("fbPanel")) renderSettings();
+      }
+    },12000);
     F.onAuthStateChanged(auth,u=>{
       UID=u?u.uid:null;
-      if(UID){ firstSnap=true; startSync(); } else { stopSync(); fbState="ready"; }
+      if(UID){ firstSnap=true; fbState="syncing"; try{ startSync(); }catch(e){ noteErr("啟動同步",e); fbState="error"; } }
+      else { stopSync(); fbState="ready"; }
       paintCloud();
       if(document.getElementById("fbPanel")) renderSettings();
     });
   }catch(e){
-    console.warn(e); FB=null; fbState="error"; paintCloud();
+    noteErr("初始化 Firebase",e); FB=null; fbState="error"; paintCloud();
     toast("Firebase 設定有問題："+(e.message||e));
   }
 }
@@ -1597,14 +1614,15 @@ function startSync(){
   const {F,db}=FB; stopSync();
   unsubMeta=F.onSnapshot(F.doc(db,"users",UID,"sys","meta"),snap=>{
     if(snap.exists()){ const d=snap.data(); if(d&&d.set){ S.set={...DEF_SET,...d.set}; rateNote(); } }
-  },e=>console.warn("設定監聽中斷",e));
+  },e=>noteErr("讀取設定",e));
 
   unsubTrips=F.onSnapshot(F.collection(db,"users",UID,"trips"),snap=>{
     const cloud=snap.docs.map(d=>d.data());
     if(cloud.length){ S.trips=cloud; migrateTrips(); persist(); render(); }
-  },e=>console.warn("檔期監聽中斷",e));
+  },e=>noteErr("讀取檔期",e));
 
   unsubItems=F.onSnapshot(F.collection(db,"users",UID,"items"),snap=>{
+    clearTimeout(loadTimer);
     const cloud=snap.docs.map(d=>d.data());
     if(firstSnap){
       firstSnap=false;
@@ -1619,7 +1637,8 @@ function startSync(){
     S.items=cloud; persist(); render();
     fbState = snap.metadata.fromCache ? "offline" : "synced";
     paintCloud();
-  },e=>{ console.warn("資料監聽中斷",e); fbState="error"; paintCloud(); });
+  },e=>{ noteErr("讀取商品資料",e); fbState="error"; paintCloud();
+         if(document.getElementById("fbPanel")) renderSettings(); });
 }
 const sameSet=(a,b)=>a.length===b.length && a.every(x=>b.some(y=>y.id===x.id));
 async function uploadAll(){
@@ -1653,6 +1672,46 @@ async function cloudSettings(){
   try{ await FB.F.setDoc(FB.F.doc(FB.db,"users",UID,"sys","meta"),{set:S.set,updatedAt:Date.now()}); }catch(e){ console.warn(e); }
 }
 const isStandalone=()=>window.navigator.standalone===true||window.matchMedia("(display-mode: standalone)").matches;
+
+/* ---------- 連線診斷：一次把每一步的結果列出來 ---------- */
+async function runDiag(){
+  const out=document.getElementById("fbDiagOut");
+  if(!out) return;
+  out.classList.remove("hide");
+  const L=[]; const put=(k,v)=>{L.push(k.padEnd(14,"　")+" "+v); out.textContent=L.join("\n");};
+  put("1 SDK 載入", window.__FB ? "✓ 成功" : "✗ 失敗（網路被擋，或 gstatic.com 連不上）");
+  const src=cfgSource();
+  put("2 設定來源", {none:"✗ 沒有設定",bad:"✗ 檔案裡的設定讀不出來",file:"✓ 檔案內建",device:"✓ 這台裝置貼的"}[src]);
+  const c=fbCfg();
+  put("3 專案 ID", c ? "✓ "+c.projectId : "✗ 讀不到");
+  put("4 授權網域", c ? (location.hostname+"　→ 需在 Firebase 的 Authentication → Settings → 授權網域裡") : "—");
+  put("5 初始化", FB ? "✓ 成功" : "✗ 失敗");
+  const u=FB&&FB.auth&&FB.auth.currentUser;
+  put("6 登入狀態", u ? "✓ "+(u.email||u.uid) : "✗ 尚未登入");
+  put("7 同步狀態", fbState);
+  if(lastErr) put("8 最後錯誤", "⚠ "+lastErr);
+  if(!FB||!u){ put("結論","先把上面打叉的項目處理掉"); return; }
+  put("9 讀寫測試", "執行中…");
+  try{
+    const {F,db}=FB;
+    const ref=F.doc(db,"users",u.uid,"sys","diag");
+    await F.setDoc(ref,{at:new Date().toISOString()});
+    const snap=await ref.get ? null : null;
+    put("9 讀寫測試", "✓ 成功，Firestore 正常");
+    put("結論", "連線沒問題。若畫面仍顯示連線中，請重新整理一次。");
+  }catch(e){
+    const code=String(e&&e.code||"");
+    put("9 讀寫測試", "✗ "+(e.code||e.message));
+    let why="";
+    if(code.includes("permission-denied")) why="安全規則擋住了。請到 Firestore → 規則，確認已貼上規則並按過「發佈」。";
+    else if(code.includes("not-found")||code.includes("NOT_FOUND")) why="找不到資料庫。請到 Firestore → 建立資料庫（選 Standard、正式版模式）。";
+    else if(code.includes("unavailable")) why="連不上 Firestore，可能是網路或防火牆擋住。";
+    else if(code.includes("failed-precondition")) why="資料庫可能還沒建立，或建成了 Datastore 模式。";
+    else why="把這段錯誤代碼貼給我看。";
+    put("結論", why);
+  }
+}
+
 async function cloudSignIn(){
   if(!FB){ toast("請先設定 Firebase（設定頁貼上，或填 HTML 最上方的 fb-config 區塊）"); return; }
   const {F,auth}=FB, prov=new F.GoogleAuthProvider();
