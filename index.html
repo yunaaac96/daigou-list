@@ -810,7 +810,8 @@ function cardOf(it){
         <button class="act state" data-act="cycle">${st.btn}</button>
         ${["deposit_wait","deposit_paid"].includes(it.state)?`<button class="act warn" data-act="miss">買不到</button>`:""}
         ${it.state==="bought"?`<button class="act warn" data-act="back">退回可以買</button>`:""}
-        <button class="act go" data-act="mapItem">找商品</button>
+        <button class="act go" data-act="mapItem">查商品</button>
+        <button class="act go" data-act="mapNear">附近有賣</button>
         ${it.store?`<button class="act go" data-act="mapStore">找 ${esc(it.store)}</button>`:""}
         <button class="act" data-act="edit">編輯</button>
         <button class="act del" data-act="del">刪除</button>
@@ -891,8 +892,16 @@ function handle(act,it){
   }
   if(act==="edit") openSheet(it);
   if(act==="mapItem"){
-    const kw=[it.nameJa||it.nameZh, it.store||"", it.nameJa?"販売店":""].filter(Boolean).join(" ");
-    openMap(kw);
+    const broken=/\?{3,}/.test(it.nameJa||"");
+    const name=(!broken && it.nameJa) ? it.nameJa : it.nameZh;
+    const kw=[name, it.store||""].filter(Boolean).join(" ");
+    if(!kw){ toast("這筆沒有可搜尋的名稱"); return; }
+    window.open("https://www.google.com/search?q="+encodeURIComponent(kw),"_blank","noopener");
+  }
+  if(act==="mapNear"){
+    const broken=/\?{3,}/.test(it.nameJa||"");
+    const name=(!broken && it.nameJa) ? it.nameJa : it.nameZh;
+    openMap([name,"販売店"].filter(Boolean).join(" "));
   }
   if(act==="mapStore") openMap(it.store);
 }
@@ -2039,6 +2048,8 @@ async function runDiag(){
   const c=fbCfg();
   put("3 專案 ID", c ? "✓ "+c.projectId : "✗ 讀不到");
   put("4 授權網域", c ? (location.hostname+"　→ 需在 Firebase 的 Authentication → Settings → 授權網域裡") : "—");
+  put("4b authDomain", c ? (c.authDomain||"（未設定）") : "—");
+  if(c&&c.authDomain) put("4c 轉址網址", "https://"+c.authDomain+"/__/auth/handler　→ 需在 Google Cloud 憑證的「已授權的重新導向 URI」裡");
   put("5 初始化", FB ? "✓ 成功" : "✗ 失敗");
   const u=FB&&FB.auth&&FB.auth.currentUser;
   put("6 登入狀態", u ? "✓ "+(u.email||u.uid) : "✗ 尚未登入");
