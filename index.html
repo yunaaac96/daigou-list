@@ -283,95 +283,6 @@ table.lt th{font-size:11px; color:var(--ink3); font-weight:500}
 table.lt td.n{text-align:right; white-space:nowrap}
 
 
-/* ---------- 檔期管理 ---------- */
-function newTrip(){
-  const n=prompt("新檔期名稱（例如：2026/10 東京）");
-  if(n===null) return null;
-  const name=n.trim(); if(!name){ toast("請輸入名稱"); return null; }
-  const t={id:newId("t"),name,start:"",end:"",rateSell:null,rateReal:null,note:"",archived:false};
-  S.trips.push(t); S.cur=t.id; save(); cloudPutTrip(t); render();
-  toast("已建立「"+name+"」");
-  return t;
-}
-function tripSums(id){
-  const arr=tripItems(id);
-  let cost=0,charge=0,profit=0,depWait=0,balWait=0;
-  arr.forEach(it=>{
-    const m=calc(it);
-    if(it.state==="refunded") return;
-    cost+=m.cost; charge+=m.charge; profit+=m.profit;
-    if(it.state==="deposit_wait") depWait+=m.deposit;
-    if(it.state==="bought") balWait+=m.balance;
-  });
-  return {n:arr.length,cost,charge,profit,depWait,balWait};
-}
-function renderTrips(){
-  const box=document.getElementById("tripList"); if(!box) return;
-  if(!S.trips.length){ box.innerHTML=`<p class="hint">還沒有檔期。按上面的「新增檔期」開始。</p>`; return; }
-  box.innerHTML=S.trips.map(t=>{
-    const u=tripSums(t.id);
-    return `<div class="tripcard ${t.archived?"arch":""}">
-      <div class="th">
-        <b>${esc(t.name)}</b>
-        ${t.archived?`<span class="tag">已封存</span>`:""}
-        ${S.cur===t.id?`<span class="tag cust">目前</span>`:""}
-        <span class="sp"></span>
-        <button class="act" data-t="edit" data-id="${t.id}">編輯</button>
-        <button class="act" data-t="arch" data-id="${t.id}">${t.archived?"取消封存":"封存"}</button>
-        <button class="act del" data-t="del" data-id="${t.id}">刪除</button>
-      </div>
-      <div class="meta">${t.start||t.end?`${t.start||"?"} – ${t.end||"?"}　·　`:""}${u.n} 筆${(t.rateSell!=null&&t.rateSell!=="")?`　·　檔期匯率 ${t.rateSell}`:""}${t.note?`　·　${esc(t.note)}`:""}</div>
-      <div class="sums">
-        <span>先墊 <b>${twd(u.cost)}</b></span>
-        <span>應收 <b>${twd(u.charge)}</b></span>
-        <span style="color:var(--amber)">待收訂金 <b>${twd(u.depWait)}</b></span>
-        <span style="color:var(--shu)">待收尾款 <b>${twd(u.balWait)}</b></span>
-        <span style="color:var(--matcha)">賺 <b>${twd(u.profit)}</b></span>
-      </div>
-    </div>`;
-  }).join("");
-  box.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>tripAction(b.dataset.t,b.dataset.id));
-}
-function tripAction(act,id){
-  const t=trip(id); if(!t) return;
-  if(act==="edit"){
-    const name=prompt("檔期名稱",t.name); if(name===null) return;
-    const start=prompt("出發日（YYYY-MM-DD，可留空）",t.start||""); if(start===null) return;
-    const end=prompt("回國日（YYYY-MM-DD，可留空）",t.end||""); if(end===null) return;
-    const rs=prompt("這個檔期的代購匯率（留空＝用今日設定）",t.rateSell??""); if(rs===null) return;
-    const rr=prompt("這個檔期的實際匯率（留空＝用今日設定）",t.rateReal??""); if(rr===null) return;
-    t.name=name.trim()||t.name; t.start=start.trim(); t.end=end.trim();
-    t.rateSell=rs.trim()===""?null:+rs; t.rateReal=rr.trim()===""?null:+rr;
-    save(); cloudPutTrip(t); render(); renderSettings(); toast("已更新");
-  }
-  if(act==="arch"){
-    t.archived=!t.archived;
-    if(t.archived && S.cur===id){ const o=S.trips.find(x=>!x.archived); S.cur=o?o.id:"all"; }
-    save(); cloudPutTrip(t); render(); renderSettings();
-    toast(t.archived?"已封存":"已取消封存");
-  }
-  if(act==="del"){
-    const n=tripItems(id).length;
-    if(n){
-      const move=confirm(`「${t.name}」底下還有 ${n} 筆商品。\n\n按「確定」把這些商品搬到另一個檔期；按「取消」連同商品一起刪除。`);
-      if(move){
-        const others=S.trips.filter(x=>x.id!==id);
-        if(!others.length){ toast("沒有其他檔期可以搬，請先新增一個"); return; }
-        const to=prompt("搬到哪個檔期？請輸入編號：\n"+others.map((x,i)=>`${i+1}. ${x.name}`).join("\n"),"1");
-        const k=others[(+to||1)-1]; if(!k) return;
-        tripItems(id).forEach(it=>{ it.tripId=k.id; cloudPut(it); });
-      } else {
-        if(!confirm(`確定要連同 ${n} 筆商品一起刪除？這個動作無法復原。`)) return;
-        tripItems(id).forEach(it=>cloudDel(it.id));
-        S.items=S.items.filter(it=>it.tripId!==id);
-      }
-    }
-    S.trips=S.trips.filter(x=>x.id!==id);
-    if(S.cur===id) S.cur=S.trips.length?S.trips[0].id:"all";
-    save(); cloudDelTrip(id); render(); renderSettings(); toast("已刪除檔期");
-  }
-}
-
 /* ---------- 設定 ---------- */
 .panel{background:var(--card); border:1px solid var(--rule); border-radius:var(--r); padding:16px; margin-bottom:12px}
 .panel h3{margin:0 0 3px; font-size:15.5px}
@@ -497,12 +408,12 @@ textarea.i{resize:vertical; min-height:58px}
      =================================================================== -->
 <script type="text/plain" id="fb-config">
 const firebaseConfig = {
-apiKey: "AIzaSyAxoWsPSPVEVO8BQHiAuXVlLk0Np4bO4fY",
-authDomain: "daigou-6d36b.firebaseapp.com",
-projectId: "daigou-6d36b",
-storageBucket: "daigou-6d36b.firebasestorage.app",
-messagingSenderId: "728344633031",
-appId: "1:728344633031:web:c78c1e746cdafbe34168e2"
+  apiKey: "AIzaSyAxoWsPSPVEVO8BQHiAuXVlLk0Np4bO4fY",
+  authDomain: "daigou-6d36b.firebaseapp.com",
+  projectId: "daigou-6d36b",
+  storageBucket: "daigou-6d36b.firebasestorage.app",
+  messagingSenderId: "728344633031",
+  appId: "1:728344633031:web:c78c1e746cdafbe34168e2"
 }
 </script>
 
@@ -1217,6 +1128,95 @@ function copyFor(name,mode){
   if(navigator.clipboard&&navigator.clipboard.writeText){
     navigator.clipboard.writeText(txt).then(()=>toast("已複製，可直接貼到 LINE"),()=>toast("複製失敗，請手動選取"));
   } else { toast("此瀏覽器不支援複製"); }
+}
+
+/* ---------- 檔期管理 ---------- */
+function newTrip(){
+  const n=prompt("新檔期名稱（例如：2026/10 東京）");
+  if(n===null) return null;
+  const name=n.trim(); if(!name){ toast("請輸入名稱"); return null; }
+  const t={id:newId("t"),name,start:"",end:"",rateSell:null,rateReal:null,note:"",archived:false};
+  S.trips.push(t); S.cur=t.id; save(); cloudPutTrip(t); render();
+  toast("已建立「"+name+"」");
+  return t;
+}
+function tripSums(id){
+  const arr=tripItems(id);
+  let cost=0,charge=0,profit=0,depWait=0,balWait=0;
+  arr.forEach(it=>{
+    const m=calc(it);
+    if(it.state==="refunded") return;
+    cost+=m.cost; charge+=m.charge; profit+=m.profit;
+    if(it.state==="deposit_wait") depWait+=m.deposit;
+    if(it.state==="bought") balWait+=m.balance;
+  });
+  return {n:arr.length,cost,charge,profit,depWait,balWait};
+}
+function renderTrips(){
+  const box=document.getElementById("tripList"); if(!box) return;
+  if(!S.trips.length){ box.innerHTML=`<p class="hint">還沒有檔期。按上面的「新增檔期」開始。</p>`; return; }
+  box.innerHTML=S.trips.map(t=>{
+    const u=tripSums(t.id);
+    return `<div class="tripcard ${t.archived?"arch":""}">
+      <div class="th">
+        <b>${esc(t.name)}</b>
+        ${t.archived?`<span class="tag">已封存</span>`:""}
+        ${S.cur===t.id?`<span class="tag cust">目前</span>`:""}
+        <span class="sp"></span>
+        <button class="act" data-t="edit" data-id="${t.id}">編輯</button>
+        <button class="act" data-t="arch" data-id="${t.id}">${t.archived?"取消封存":"封存"}</button>
+        <button class="act del" data-t="del" data-id="${t.id}">刪除</button>
+      </div>
+      <div class="meta">${t.start||t.end?`${t.start||"?"} – ${t.end||"?"}　·　`:""}${u.n} 筆${(t.rateSell!=null&&t.rateSell!=="")?`　·　檔期匯率 ${t.rateSell}`:""}${t.note?`　·　${esc(t.note)}`:""}</div>
+      <div class="sums">
+        <span>先墊 <b>${twd(u.cost)}</b></span>
+        <span>應收 <b>${twd(u.charge)}</b></span>
+        <span style="color:var(--amber)">待收訂金 <b>${twd(u.depWait)}</b></span>
+        <span style="color:var(--shu)">待收尾款 <b>${twd(u.balWait)}</b></span>
+        <span style="color:var(--matcha)">賺 <b>${twd(u.profit)}</b></span>
+      </div>
+    </div>`;
+  }).join("");
+  box.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>tripAction(b.dataset.t,b.dataset.id));
+}
+function tripAction(act,id){
+  const t=trip(id); if(!t) return;
+  if(act==="edit"){
+    const name=prompt("檔期名稱",t.name); if(name===null) return;
+    const start=prompt("出發日（YYYY-MM-DD，可留空）",t.start||""); if(start===null) return;
+    const end=prompt("回國日（YYYY-MM-DD，可留空）",t.end||""); if(end===null) return;
+    const rs=prompt("這個檔期的代購匯率（留空＝用今日設定）",t.rateSell??""); if(rs===null) return;
+    const rr=prompt("這個檔期的實際匯率（留空＝用今日設定）",t.rateReal??""); if(rr===null) return;
+    t.name=name.trim()||t.name; t.start=start.trim(); t.end=end.trim();
+    t.rateSell=rs.trim()===""?null:+rs; t.rateReal=rr.trim()===""?null:+rr;
+    save(); cloudPutTrip(t); render(); renderSettings(); toast("已更新");
+  }
+  if(act==="arch"){
+    t.archived=!t.archived;
+    if(t.archived && S.cur===id){ const o=S.trips.find(x=>!x.archived); S.cur=o?o.id:"all"; }
+    save(); cloudPutTrip(t); render(); renderSettings();
+    toast(t.archived?"已封存":"已取消封存");
+  }
+  if(act==="del"){
+    const n=tripItems(id).length;
+    if(n){
+      const move=confirm(`「${t.name}」底下還有 ${n} 筆商品。\n\n按「確定」把這些商品搬到另一個檔期；按「取消」連同商品一起刪除。`);
+      if(move){
+        const others=S.trips.filter(x=>x.id!==id);
+        if(!others.length){ toast("沒有其他檔期可以搬，請先新增一個"); return; }
+        const to=prompt("搬到哪個檔期？請輸入編號：\n"+others.map((x,i)=>`${i+1}. ${x.name}`).join("\n"),"1");
+        const k=others[(+to||1)-1]; if(!k) return;
+        tripItems(id).forEach(it=>{ it.tripId=k.id; cloudPut(it); });
+      } else {
+        if(!confirm(`確定要連同 ${n} 筆商品一起刪除？這個動作無法復原。`)) return;
+        tripItems(id).forEach(it=>cloudDel(it.id));
+        S.items=S.items.filter(it=>it.tripId!==id);
+      }
+    }
+    S.trips=S.trips.filter(x=>x.id!==id);
+    if(S.cur===id) S.cur=S.trips.length?S.trips[0].id:"all";
+    save(); cloudDelTrip(id); render(); renderSettings(); toast("已刪除檔期");
+  }
 }
 
 /* ---------- 設定 ---------- */
