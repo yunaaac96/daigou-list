@@ -66,7 +66,12 @@ button{cursor:pointer}
 .top{
   position:sticky; top:env(safe-area-inset-top,0px); z-index:30;
   background:var(--paper); border-bottom:1px solid var(--rule);
+  transition:box-shadow .18s;
 }
+/* 捲動後給一點陰影，讓人知道底下還有內容 */
+.top.lifted{box-shadow:0 2px 10px color-mix(in srgb,var(--ink) 9%,transparent)}
+/* 統計與篩選改成跟著捲走：黏頂的只剩檔期和分頁，手機才看得到清單 */
+.stats{margin-top:0}
 .wrap{max-width:1100px; margin:0 auto; padding:0 14px}
 .brand{display:flex; align-items:center; gap:8px; padding:12px 0 8px; min-width:0}
 .brand h1{margin:0; font-size:17px; font-weight:700; letter-spacing:.01em; white-space:nowrap; flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis}
@@ -116,7 +121,7 @@ button{cursor:pointer}
 
 /* ---------- 統計 ---------- */
 /* 統計區：內容是「代購」「自購」兩個區塊，直向堆疊 */
-.stats{display:block; padding:2px 16px 10px; border-bottom:1px solid var(--rule)}
+.stats{display:block; padding:2px 14px 8px; border-bottom:1px solid var(--rule)}
 .stat{min-width:0}
 .stat .v{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .stat .k{font-size:11px; color:var(--ink3); white-space:nowrap}
@@ -125,7 +130,7 @@ button{cursor:pointer}
   /* 桌機夠寬就把代購、自購並排 */
   .stats{display:flex; gap:12px; align-items:flex-start}
   .sgrp{flex:1 1 0; margin:10px 0}
-  .sgrp.self{flex:0 0 260px}
+  .sgrp.self{flex:0 0 auto; align-self:stretch}
 }
 
 /* ---------- 篩選 ---------- */
@@ -180,15 +185,21 @@ main{padding:14px 0 100px}
 .item.ready{border-color:color-mix(in srgb,var(--matcha) 45%,var(--rule)); border-width:1.5px}
 
 /* ---- 統計：代購／自購分區 ---- */
-.sgrp{border:1px solid var(--rule); border-radius:11px; background:var(--card); padding:10px 12px 12px; margin:10px 0}
+.sgrp{border:1px solid var(--rule); border-radius:11px; background:var(--card); padding:9px 12px 10px; margin:8px 0}
+.sgrp.oneline{display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; padding:9px 12px; font-size:12.5px}
+.sgrp.oneline>b{font-size:13px; letter-spacing:.08em}
+.sgrp.oneline .n{font-size:11.5px; color:var(--ink3)}
+.sgrp.oneline .sp{flex:1 1 0; min-width:0}
+.sgrp.oneline .kv{font-size:11.5px; color:var(--ink3); white-space:nowrap}
+.sgrp.oneline .kv b{font-size:14px; color:var(--ink2); margin-left:2px}
 .sgrp.buy{border-left:3px solid var(--shu)}
 .sgrp.self{border-left:3px solid var(--ink3)}
-.sgh{display:flex; align-items:baseline; gap:10px; margin-bottom:8px}
+.sgh{display:flex; align-items:baseline; gap:10px; margin-bottom:7px}
 .sgh b{font-size:13px; letter-spacing:.08em}
 .sgh span{font-size:11.5px; color:var(--ink3)}
-.snote{font-size:10.5px; color:var(--ink3); margin-top:7px; line-height:1.6}
+.snote{font-size:10.5px; color:var(--ink3); margin-top:6px; line-height:1.55}
 .srow{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px}
-.srow.sub{grid-template-columns:repeat(3,minmax(0,1fr)); margin-top:8px; padding-top:9px; border-top:1px dashed var(--rule)}
+.srow.sub{grid-template-columns:repeat(3,minmax(0,1fr)); margin-top:7px; padding-top:8px; border-top:1px dashed var(--rule)}
 .srow.sub .stat .v{font-size:14.5px; color:var(--ink2)}
 .srow .stat{background:transparent; border:0; padding:0; min-width:0}
 .srow .stat .k{font-size:11px; color:var(--ink3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
@@ -522,8 +533,10 @@ textarea.i{resize:vertical; min-height:58px}
       <button class="tab" role="tab" aria-selected="false" data-view="settings">設定</button>
     </div>
   </div>
-  <div class="wrap" style="padding:0"><div class="stats" id="stats"></div></div>
-  <div class="wrap" id="filterWrap">
+</div>
+
+<div class="wrap" style="padding:0"><div class="stats" id="stats"></div></div>
+<div class="wrap" id="filterWrap">
     <div class="filters">
       <input id="q" type="search" placeholder="搜尋商品、日文名、備註">
       <select id="fCust"><option value="">全部客人</option></select>
@@ -536,7 +549,6 @@ textarea.i{resize:vertical; min-height:58px}
       <button class="chipclear hide" id="clearF">清除</button>
     </div>
     <div class="flow" id="flowChips"></div>
-  </div>
 </div>
 
 <!-- ===================================================================
@@ -1208,15 +1220,14 @@ function renderStats(list){
         ${cell("預估收益",twd(f.bProfit),f.bProfit<0?"var(--shu)":"var(--matcha)")}
         ${cell("可退稅金額",yen(f.bTax))}
       </div>
-      <div class="snote">刷卡金額、預估收益、可退稅只計算<b>已買到</b>的商品</div>
+      <div class="snote">下排只計算<b>已買到</b>的商品</div>
     </div>`;
   const selfBlock = f.nSelf ? `
-    <div class="sgrp self">
-      <div class="sgh"><b>自購</b><span>${f.nSelf} 項 · ${f.sQty} 件</span></div>
-      <div class="srow sub">
-        ${cell("刷卡金額",twd(f.sCost))}
-        ${cell("可退稅金額",yen(f.sTax))}
-      </div>
+    <div class="sgrp self oneline">
+      <b>自購</b><span class="n">${f.nSelf} 項 · ${f.sQty} 件</span>
+      <span class="sp"></span>
+      <span class="kv">刷卡 <b class="num">${twd(f.sCost)}</b></span>
+      ${f.sTax?`<span class="kv">可退稅 <b class="num">${yen(f.sTax)}</b></span>`:""}
     </div>` : "";
   document.getElementById("stats").innerHTML = (f.nBuy?buyBlock:"") + selfBlock
     || `<div class="sgrp"><div class="sgh"><b>這個檔期還沒有商品</b></div></div>`;
@@ -2717,6 +2728,16 @@ function checkHash(){
   quickAdd(m[1]);
 }
 window.addEventListener("hashchange",checkHash);
+
+/* 捲動時給版頭一點陰影 */
+(function(){
+  const top=document.querySelector(".top");
+  let tick=false;
+  addEventListener("scroll",()=>{
+    if(tick) return; tick=true;
+    requestAnimationFrame(()=>{ top.classList.toggle("lifted",scrollY>4); tick=false; });
+  },{passive:true});
+})();
 
 /* ---------- 分頁 ---------- */
 let curView="list";
