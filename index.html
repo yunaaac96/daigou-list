@@ -187,15 +187,15 @@ main{padding:14px 0 100px}
 .sgh b{font-size:13px; letter-spacing:.08em}
 .sgh span{font-size:11.5px; color:var(--ink3)}
 .snote{font-size:10.5px; color:var(--ink3); margin-top:7px; line-height:1.6}
-.srow{display:grid; grid-template-columns:repeat(4,1fr); gap:8px}
-.srow.sub{grid-template-columns:repeat(3,1fr); margin-top:8px; padding-top:9px; border-top:1px dashed var(--rule)}
+.srow{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px}
+.srow.sub{grid-template-columns:repeat(3,minmax(0,1fr)); margin-top:8px; padding-top:9px; border-top:1px dashed var(--rule)}
 .srow.sub .stat .v{font-size:14.5px; color:var(--ink2)}
 .srow .stat{background:transparent; border:0; padding:0; min-width:0}
 .srow .stat .k{font-size:11px; color:var(--ink3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .srow .stat .v{font-size:16px; font-weight:600; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 @media(max-width:560px){
-  .srow{grid-template-columns:repeat(2,1fr)}
-  .srow.sub{grid-template-columns:repeat(3,1fr)}
+  .srow{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .srow.sub{grid-template-columns:repeat(3,minmax(0,1fr))}
   .srow .stat .v{font-size:14.5px}
   .srow.sub .stat .v{font-size:13px}
 }
@@ -205,14 +205,15 @@ main{padding:14px 0 100px}
 .phase{font-size:11px; padding:2px 8px; border-radius:999px; border:1px solid currentColor; white-space:nowrap}
 .phase.wait{color:var(--amber)} .phase.go{color:var(--matcha)}
 .phase.mid{color:var(--shu)} .phase.alert{color:var(--shu)} .phase.done{color:var(--ink3)}
-.paybar{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; padding:11px 0 12px; border-bottom:1px dashed var(--rule)}
+.paybar{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; padding:11px 14px 12px; border-bottom:1px dashed var(--rule)}
 .pay{border:1px solid var(--rule); border-radius:10px; padding:9px 10px; background:var(--paper); min-width:0}
 .pay.on{border-color:color-mix(in srgb,var(--matcha) 50%,var(--rule)); background:color-mix(in srgb,var(--matcha) 7%,var(--paper))}
 .pay.quiet{background:transparent}
 .pay .k{font-size:11px; color:var(--ink3); display:flex; gap:6px; align-items:baseline}
 .pay .k .mini{font-size:10px; opacity:.8}
 .pay .v{font-size:17px; font-weight:600; margin-top:3px; font-variant-numeric:tabular-nums}
-.pay .sub{font-size:10.5px; color:var(--ink3); margin-top:3px; line-height:1.5}
+.pay .sub{font-size:10.5px; color:var(--ink3); margin-top:3px; line-height:1.6}
+.nw{white-space:nowrap}
 .pay > .act{margin-top:7px; width:100%; justify-content:center; display:flex}
 .pedit .act{flex:0 0 auto; width:auto; padding:4px 8px; margin:0}
 .pay .act[disabled]{opacity:.4; pointer-events:none}
@@ -221,8 +222,8 @@ main{padding:14px 0 100px}
      border:1px solid var(--rule); border-radius:7px; background:var(--card); color:var(--ink);
      font-variant-numeric:tabular-nums}
 .pin:focus{outline:none; border-color:var(--shu)}
-@media(max-width:700px){ .paybar{grid-template-columns:repeat(2,1fr)} }
-.salebox{margin:11px 0 0; padding:11px 12px; background:var(--paper); border:1px solid var(--rule);
+@media(max-width:700px){ .paybar{grid-template-columns:repeat(2,minmax(0,1fr))} }
+.salebox{margin:11px 14px 0; padding:11px 12px; background:var(--paper); border:1px solid var(--rule);
   border-radius:9px; font-size:12.5px; line-height:1.85; white-space:pre-wrap; word-break:break-word; font-family:inherit}
 
 /* ---- 表單進階區 ---- */
@@ -238,12 +239,13 @@ main{padding:14px 0 100px}
 
 /* ---- 收益核帳 ---- */
 .audit{margin-top:18px; border-top:2px solid var(--rule2)}
-.auditsum{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; padding:11px 0 4px}
+.auditsum{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; padding:11px 14px 4px}
 .auditsum .k{font-size:11px; color:var(--ink3)}
 .auditsum .v{font-size:18px; font-weight:600; margin-top:2px; font-variant-numeric:tabular-nums}
-.audithint{margin:10px 0 0; padding-left:18px; font-size:11.5px; color:var(--ink3); line-height:1.9}
+.audithint{margin:10px 14px 14px; padding-left:18px; font-size:11.5px; color:var(--ink3); line-height:1.9}
 .audithint b{color:var(--shu)}
 .audittbl{overflow-x:auto; margin-top:12px; -webkit-overflow-scrolling:touch}
+.audit, .copanel{padding-bottom:2px}
 table.at{min-width:900px}
 table.at tfoot td{border-top:2px solid var(--rule2); font-weight:600; padding-top:9px}
 table.at tr.skip td{opacity:.5}
@@ -254,7 +256,7 @@ table.at tr.skip td{opacity:.5}
 
 /* ---- 結帳單 ---- */
 .copanel{margin-top:18px; border-top:2px solid var(--rule2)}
-.corow{display:flex; gap:11px; align-items:center; padding:10px 0; border-bottom:1px dashed var(--rule)}
+.corow{display:flex; gap:11px; align-items:center; padding:10px 14px; border-bottom:1px dashed var(--rule)}
 .corow:last-child{border-bottom:0}
 .comain{flex:1; min-width:0}
 .con{font-size:13.5px; font-weight:600}
@@ -301,10 +303,10 @@ table.at tr.skip td{opacity:.5}
 
 /* 金額區：收據式點線引導 */
 .money{margin-top:9px; border-top:1px solid var(--rule2); padding-top:8px}
-.row{display:flex; align-items:baseline; gap:6px; font-size:12.5px; line-height:1.9}
-.row .lab{color:var(--ink3); white-space:nowrap}
-.row .dots{flex:1; border-bottom:1px dotted var(--rule); transform:translateY(-3px)}
-.row .val{font-weight:500; white-space:nowrap}
+.row{display:flex; align-items:baseline; gap:6px; font-size:12.5px; line-height:1.9; min-width:0}
+.row .lab{color:var(--ink3); white-space:nowrap; min-width:0; overflow:hidden; text-overflow:ellipsis}
+.row .dots{flex:1 1 12px; min-width:8px; border-bottom:1px dotted var(--rule); transform:translateY(-3px)}
+.row .val{font-weight:500; white-space:nowrap; flex:0 0 auto}
 .row.tax .val{color:var(--gold)}
 .row.total{font-size:14px; border-top:1px solid var(--rule2); margin-top:5px; padding-top:5px}
 .row.total .lab{color:var(--ink2); font-weight:500}
@@ -355,22 +357,42 @@ table.at tr.skip td{opacity:.5}
 /* ---------- 對帳 ---------- */
 .ledger{background:var(--card); border:1px solid var(--rule); border-radius:var(--r); margin-bottom:12px; overflow:hidden}
 .lhead{display:flex; align-items:center; gap:10px; padding:12px 14px; border-bottom:1px solid var(--rule2); flex-wrap:wrap}
-.lhead h3{margin:0; font-size:15.5px; font-weight:700}
+.lhead h3{margin:0; font-size:15.5px; font-weight:700; min-width:0; overflow-wrap:anywhere}
 .lhead .cnt{font-size:12px; color:var(--ink3)}
 .lhead .spacer{flex:1}
-.lsum{display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--rule2)}
+/* .ledger 本身沒有內距，裡面直接放的說明文字要自己補，否則會貼著邊框 */
+.ledger>.hint{margin:0; padding:12px 14px 14px; line-height:1.85}
+.lsum{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1px; background:var(--rule2)}
 .lsum div{background:var(--card); padding:9px 14px}
 .lsum .k{font-size:11px; color:var(--ink3)}
 .lsum .v{font-size:15px; font-weight:700}
 .lsum .v.net{color:var(--matcha)}
-.lflow{display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--rule2); border-top:1px solid var(--rule2)}
+.lflow{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:1px; background:var(--rule2); border-top:1px solid var(--rule2)}
 .lflow div{background:var(--card); padding:8px 14px}
 .lflow .k{font-size:11px; color:var(--ink3)}
 .lflow .v{font-size:13.5px; font-weight:700}
 .lflow .v.wait{color:var(--amber)} .lflow .v.go{color:var(--matcha)} .lflow .v.mid{color:var(--shu)}
 @media (max-width:620px){.lflow{grid-template-columns:repeat(2,1fr)}}
+.lttbl{overflow-x:auto; -webkit-overflow-scrolling:touch}
 table.lt{width:100%; border-collapse:collapse; font-size:12.5px}
 table.lt th,table.lt td{padding:7px 14px; text-align:left; border-top:1px solid var(--rule2)}
+@media(max-width:420px){
+  /* 窄機身：縮內距、縮字，先讓表格塞得下；真的塞不下才左右捲 */
+  table.lt{font-size:11.5px}
+  table.lt th,table.lt td{padding:7px 8px}
+  table.lt th:first-child,table.lt td:first-child{padding-left:14px}
+  table.lt th:last-child,table.lt td:last-child{padding-right:14px}
+  .paybar{padding-left:10px; padding-right:10px; gap:8px}
+  .pay{padding:8px}
+  .auditsum{padding-left:10px; padding-right:10px; gap:6px}
+  .auditsum .v{font-size:14.5px}
+  .auditsum .k{font-size:10.5px}
+  .salebox{margin-left:10px; margin-right:10px}
+  .corow{padding-left:10px; padding-right:10px}
+  .lhead{padding:11px 10px; gap:8px}
+  .brow{padding-left:10px; padding-right:10px}
+  .ledger>.hint{padding-left:10px; padding-right:10px}
+}
 table.lt th{font-size:11px; color:var(--ink3); font-weight:500}
 table.lt td.n{text-align:right; white-space:nowrap}
 
@@ -1453,7 +1475,7 @@ function renderLedger(){
     const depVal = Math.round(u.deposit);
     const auto = (o.depAmt==null||o.depAmt==="");
     const sale = saleOpen[o.id] ? `<pre class="salebox">${esc(saleText(o))}</pre>
-        <div class="btnrow" style="margin:0 0 10px"><button class="act" data-ord="saleCopy" data-id="${o.id}">複製這段</button></div>` : "";
+        <div class="btnrow" style="margin:9px 14px 12px"><button class="act" data-ord="saleCopy" data-id="${o.id}">複製這段</button></div>` : "";
     return `<section class="ledger ord ${o.balPaid?"settled":""}">
       <div class="lhead">
         <h3>${esc(name)}</h3>
@@ -1476,7 +1498,7 @@ function renderLedger(){
             <input class="pin num" type="number" min="0" step="1" data-dep="${o.id}" value="${depVal}" ${o.depPaid?"":""}>
             ${auto?"":`<button class="act" data-ord="depAuto" data-id="${o.id}" title="改回自動計算">↺</button>`}
           </div>
-          ${o.depPaid?`<div class="sub">${o.depPaidAt||""} 收到</div>`:""}
+          ${(o.depPaid&&o.depPaidAt)?`<div class="sub">${o.depPaidAt} 收到</div>`:""}
           <button class="act ${o.depPaid?"":"state"}" data-ord="depToggle" data-id="${o.id}">${o.depPaid?"取消收款":"訂金收到了"}</button>
         </div>
         <div class="pay ${o.balPaid?"on":""}">
@@ -1491,17 +1513,17 @@ function renderLedger(){
           <div class="v num" style="color:${v<0?"var(--shu)":"var(--ink)"}">${twd(Math.abs(v))}</div>
           ${sub?`<div class="sub">${sub}</div>`:""}`;
           })()}
-          ${o.balPaid?`<div class="sub">${o.balPaidAt||""} 結清</div>`:""}
+          ${(o.balPaid&&o.balPaidAt)?`<div class="sub">${o.balPaidAt} 結清</div>`:""}
           <button class="act ${o.balPaid?"":"state"}" data-ord="balToggle" data-id="${o.id}" ${(!o.depPaid&&!o.balPaid)?"disabled":""}>${o.balPaid?"取消結清":(u.refundDue>0?"訂金已退":"尾款收到了")}</button>
         </div>
         <div class="pay quiet">
           <div class="k">刷卡金額<span class="mini">已買到 ${u.nBought} 項</span></div>
           <div class="v num">${twd(u.cost)}</div>
-          <div class="sub">預估收益 <b style="color:${u.profit<0?"var(--shu)":"var(--matcha)"}">${twd(u.profit)}</b>　·　可退稅 ${yen(u.tax)}</div>
+          <div class="sub"><span class="nw">預估收益 <b style="color:${u.profit<0?"var(--shu)":"var(--matcha)"}">${twd(u.profit)}</b></span>${u.tax?`　·　<span class="nw">可退稅 ${yen(u.tax)}</span>`:""}</div>
         </div>
       </div>
       ${sale}
-      <table class="lt"><thead><tr><th>商品</th><th class="n">件</th><th class="n">應收</th><th class="n">匯率</th><th class="n">狀態</th></tr></thead><tbody>${rows}</tbody></table>
+      <div class="lttbl"><table class="lt"><thead><tr><th>商品</th><th class="n">件</th><th class="n">應收</th><th class="n">匯率</th><th class="n">狀態</th></tr></thead><tbody>${rows}</tbody></table></div>
     </section>`;
   }).join("") + auditPanel();
 
@@ -1934,7 +1956,7 @@ function checkoutPanel(){
         <button class="act del" data-co="del" data-id="${c.id}">刪除</button>
       </div>
     </div>`;
-  }).join("") : `<p class="hint" style="margin:0">還沒有結帳單。在上面的店家區塊按「結帳」，勾選這張發票涵蓋的商品，填上實付日幣就好；卡單出來之後再回來補台幣和手續費。</p>`;
+  }).join("") : `<p class="hint">還沒有結帳單。在上面的店家區塊按「結帳」，勾選這張發票涵蓋的商品，填上實付日幣就好；卡單出來之後再回來補台幣和手續費。</p>`;
   return `<section class="ledger copanel">
     <div class="lhead"><h3>店家結帳單</h3>
       <span class="cnt num">${cs.length} 張</span>
