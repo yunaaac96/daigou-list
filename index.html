@@ -225,6 +225,33 @@ main{padding:14px 0 100px}
 .salebox{margin:11px 0 0; padding:11px 12px; background:var(--paper); border:1px solid var(--rule);
   border-radius:9px; font-size:12.5px; line-height:1.85; white-space:pre-wrap; word-break:break-word; font-family:inherit}
 
+/* ---- 表單進階區 ---- */
+.adv{margin-top:14px; border-top:1px solid var(--rule); padding-top:4px}
+.adv>summary{cursor:pointer; list-style:none; padding:9px 2px; font-size:12.5px; color:var(--ink2);
+  display:flex; align-items:center; gap:8px; user-select:none}
+.adv>summary::-webkit-details-marker{display:none}
+.adv>summary::before{content:"▸"; font-size:11px; color:var(--ink3); transition:transform .15s}
+.adv[open]>summary::before{transform:rotate(90deg)}
+.adv>summary:hover{color:var(--ink)}
+.advhint{font-size:11px; color:var(--ink3); font-weight:400}
+.adv .fgrid{margin-top:4px}
+
+/* ---- 收益核帳 ---- */
+.audit{margin-top:18px; border-top:2px solid var(--rule2)}
+.auditsum{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; padding:11px 0 4px}
+.auditsum .k{font-size:11px; color:var(--ink3)}
+.auditsum .v{font-size:18px; font-weight:600; margin-top:2px; font-variant-numeric:tabular-nums}
+.audithint{margin:10px 0 0; padding-left:18px; font-size:11.5px; color:var(--ink3); line-height:1.9}
+.audithint b{color:var(--shu)}
+.audittbl{overflow-x:auto; margin-top:12px; -webkit-overflow-scrolling:touch}
+table.at{min-width:900px}
+table.at tfoot td{border-top:2px solid var(--rule2); font-weight:600; padding-top:9px}
+table.at tr.skip td{opacity:.5}
+.sub2{font-size:10.5px; color:var(--ink3); line-height:1.5; font-weight:400}
+.srctag{font-size:10px; padding:1px 6px; border-radius:999px; border:1px solid var(--rule2); white-space:nowrap}
+.srctag.card,.srctag.checkout{border-color:var(--matcha); color:var(--matcha)}
+.srctag.est{border-color:var(--amber); color:var(--amber)}
+
 /* ---- 結帳單 ---- */
 .copanel{margin-top:18px; border-top:2px solid var(--rule2)}
 .corow{display:flex; gap:11px; align-items:center; padding:10px 0; border-bottom:1px dashed var(--rule)}
@@ -538,28 +565,33 @@ textarea.i{resize:vertical; min-height:58px}
         <label class="f"><span class="lb">店家</span><input class="i" name="store" list="dlStore" placeholder="例：マツモトキヨシ"><datalist id="dlStore"></datalist></label>
         <label class="f"><span class="lb">類別</span><input class="i" name="category" list="dlCat" placeholder="例：藥妝"><datalist id="dlCat"></datalist></label>
         <label class="f"><span class="lb">當地單價 ¥<em>　含稅標價</em></span><input class="i num" name="price" type="number" min="0" step="1" required placeholder="1280"></label>
-        <label class="f"><span class="lb">狀態</span>
-          <select class="i" name="state">
-            <option value="todo">待買</option>
-            <option value="bought">已買到</option>
-            <option value="unavailable">買不到</option>
-          </select>
-        </label>
-        <label class="f"><span class="lb">檔期</span><select class="i" name="tripId"></select></label>
-        <label class="f"><span class="lb">下單日期</span><input class="i" name="orderDate" type="date"></label>
         <label class="f"><span class="lb">代購匯率（本筆）<em>　跟客人報價用</em></span>
           <span style="display:flex; gap:6px">
             <input class="i num" name="rateSell" type="number" step="0.0001" style="flex:1">
             <button type="button" class="btn" id="useNow" style="flex:0 0 auto; padding:9px 11px; font-size:12.5px; white-space:nowrap">帶入今日</button>
           </span>
         </label>
-        <label class="f"><span class="lb">實際匯率（本筆）<em>　你換日幣的成本</em></span><input class="i num" name="rateReal" type="number" step="0.0001"></label>
-        <label class="f"><span class="lb">實付 ¥<em>　單品收據；整張發票請用「結帳」</em></span><input class="i num" name="paidYen" type="number" min="0" step="1" placeholder="未結帳"></label>
-        <label class="f"><span class="lb">刷卡帳單 NT$<em>　單品；整張卡單請用「結帳」</em></span><input class="i num" name="cardTwd" type="number" min="0" step="1" placeholder="未入帳"></label>
-        <label class="f"><span class="lb">退稅金額 ¥<em>　留白＝自動計算</em></span><input class="i num" name="taxOv" type="number" min="0" step="1" placeholder="自動"></label>
-        <label class="f"><span class="lb">代購實收 NT$<em>　留白＝依代購匯率</em></span><input class="i num" name="chargeOv" type="number" min="0" step="1" placeholder="自動"></label>
       </div>
-      <label class="f" style="margin-top:12px"><span class="lb">備註</span><textarea class="i" name="note" placeholder="貨架位置、限購數量、客人指定色號…"></textarea></label>
+
+      <details class="adv" id="advBox">
+        <summary>進階<span class="advhint" id="advHint"></span></summary>
+        <div class="fgrid">
+          <label class="f"><span class="lb">狀態</span>
+            <select class="i" name="state">
+              <option value="todo">待買</option>
+              <option value="bought">已買到</option>
+              <option value="unavailable">買不到</option>
+            </select>
+          </label>
+          <label class="f"><span class="lb">檔期</span><select class="i" name="tripId"></select></label>
+          <label class="f"><span class="lb">下單日期</span><input class="i" name="orderDate" type="date"></label>
+          <label class="f"><span class="lb">實付 ¥<em>　單品收據；整張發票請用「結帳」</em></span><input class="i num" name="paidYen" type="number" min="0" step="1" placeholder="未結帳"></label>
+          <label class="f"><span class="lb">刷卡帳單 NT$<em>　單品；整張卡單請用「結帳」</em></span><input class="i num" name="cardTwd" type="number" min="0" step="1" placeholder="未入帳"></label>
+          <label class="f"><span class="lb">退稅金額 ¥<em>　留白＝依檔期的退稅方式</em></span><input class="i num" name="taxOv" type="number" min="0" step="1" placeholder="自動"></label>
+          <label class="f"><span class="lb">代購實收 NT$<em>　留白＝依代購匯率</em></span><input class="i num" name="chargeOv" type="number" min="0" step="1" placeholder="自動"></label>
+        </div>
+        <label class="f" style="margin-top:12px"><span class="lb">備註</span><textarea class="i" name="note" placeholder="貨架位置、限購數量、客人指定色號…"></textarea></label>
+      </details>
 
       <div class="calc" id="calcBox"></div>
 
@@ -568,6 +600,34 @@ textarea.i{resize:vertical; min-height:58px}
         <button type="button" class="btn" data-close>取消</button>
         <span style="flex:1"></span>
         <button type="button" class="btn danger hide" id="delBtn">刪除這筆</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="sheet" id="tripSheet" aria-modal="true" role="dialog">
+  <div class="veil" data-close></div>
+  <div class="panelbox">
+    <h2 id="tripTitle">新增檔期</h2>
+    <form id="tripForm">
+      <p class="hint" style="margin:0 0 12px">一趟代購就是一個檔期。<b>退稅方式</b>和匯率設在這裡，不會影響其他檔期 —— 2026/11 起日本改成出境時還付，新舊檔期的算法會不一樣。</p>
+      <div class="fgrid">
+        <label class="f"><span class="lb">檔期名稱</span><input class="i" name="name" required placeholder="例：2026/11 東京"></label>
+        <label class="f"><span class="lb">退稅方式<em>　這趟怎麼退稅</em></span>
+          <select class="i" name="refundMode">
+            <option value="store">店頭免稅（結帳直接付稅拔價）</option>
+            <option value="airport">機場退稅（結帳付含稅，出境才退）</option>
+          </select>
+        </label>
+        <label class="f"><span class="lb">出發日<em>　可留空</em></span><input class="i" name="start" type="date"></label>
+        <label class="f"><span class="lb">回國日<em>　可留空</em></span><input class="i" name="end" type="date"></label>
+        <label class="f"><span class="lb">代購匯率<em>　留空＝用今日設定</em></span><input class="i num" name="rateSell" type="number" step="0.0001" placeholder="跟著設定"></label>
+        <label class="f"><span class="lb">實際匯率<em>　你換日幣的成本</em></span><input class="i num" name="rateReal" type="number" step="0.0001" placeholder="跟著設定"></label>
+      </div>
+      <label class="f" style="margin-top:12px"><span class="lb">備註</span><input class="i" name="note" placeholder="例：石垣島＋沖繩本島"></label>
+      <div class="btnrow">
+        <button type="submit" class="btn primary">儲存</button>
+        <button type="button" class="btn" data-close>取消</button>
       </div>
     </form>
   </div>
@@ -638,10 +698,11 @@ function load(){
         if(it.cardTwd===undefined) it.cardTwd=null;
         if(it.url===undefined) it.url="";
         if(it.rateSell===undefined) it.rateSell=S.set.rateSell;   /* 既有資料凍結在目前匯率 */
-        if(it.rateReal===undefined) it.rateReal=S.set.rateReal;
+        if(it.rateReal===undefined) it.rateReal=null;   /* 留空＝跟著檔期走 */
         if(it.orderDate===undefined) it.orderDate=new Date(it.ts||Date.now()).toISOString().slice(0,10);
       });
       migrateOrders();
+      pruneOrders();
     }
   }catch(e){ console.warn("讀取失敗",e); }
 }
@@ -780,11 +841,13 @@ function migrateTrips(){
   if(!Array.isArray(S.trips)) S.trips=[];
   const orphan=S.items.filter(i=>!i.tripId);
   if(orphan.length && !S.trips.length){
-    const t={id:newId("t"),name:"未分類",start:"",end:"",rateSell:null,rateReal:null,note:"",archived:false};
+    const t={id:newId("t"),name:"未分類",start:"",end:"",rateSell:null,rateReal:null,refundMode:S.set.refundMode||"store",note:"",archived:false};
     S.trips=[t]; orphan.forEach(i=>i.tripId=t.id);
   } else if(orphan.length){
     orphan.forEach(i=>i.tripId=S.trips[0].id);
   }
+  /* 退稅方式改成檔期層級後，既有檔期凍結在當時的全域設定，數字才不會回頭變動 */
+  S.trips.forEach(t=>{ if(!t.refundMode) t.refundMode=S.set.refundMode||"store"; });
   if(!S.cur || (S.cur!=="all" && !S.trips.some(t=>t.id===S.cur)))
     S.cur = S.trips.length ? S.trips[0].id : "all";
 }
@@ -795,8 +858,15 @@ function tripItems(id){ return S.items.filter(i=>i.tripId===id); }
 
 /* ---------- 計算 ---------- */
 /* 匯率以單筆為準，沒有才退回設定值。報價後就該凍結，避免事後改設定影響已成交的單 */
-const RS=it=>(it&&it.rateSell!=null&&it.rateSell!=="")?+it.rateSell:(+S.set.rateSell||0);
-const RR=it=>(it&&it.rateReal!=null&&it.rateReal!=="")?+it.rateReal:(+S.set.rateReal||0);
+const has=v=>v!=null&&v!=="";
+/* 匯率三層：單筆 → 檔期 → 今日設定。代購匯率逐筆凍結，實際匯率跟著檔期走 */
+const RS=it=>{ if(has(it&&it.rateSell)) return +it.rateSell;
+  const t=it&&trip(it.tripId); return has(t&&t.rateSell)?+t.rateSell:(+S.set.rateSell||0); };
+const RR=it=>{ if(has(it&&it.rateReal)) return +it.rateReal;
+  const t=it&&trip(it.tripId); return has(t&&t.rateReal)?+t.rateReal:(+S.set.rateReal||0); };
+/* 退稅方式綁在檔期上：2026/11 之後日本改成出境還付，不能用一個全域設定回頭改掉舊檔期 */
+const RMODE=it=>{ const t=it&&trip(it.tripId); return (t&&t.refundMode)||S.set.refundMode||"store"; };
+const RMODE_T={store:"店頭免稅", airport:"機場退稅"};
 /* 新增商品時帶入的匯率：檔期有設就用檔期的，否則用今日設定 */
 const defRS=()=>{const t=curTrip(); return (t&&t.rateSell!=null&&t.rateSell!=="")?t.rateSell:S.set.rateSell;};
 const defRR=()=>{const t=curTrip(); return (t&&t.rateReal!=null&&t.rateReal!=="")?t.rateReal:S.set.rateReal;};
@@ -817,6 +887,16 @@ function getOrder(tripId,customer){
   return o;
 }
 const orderOf = it => it.kind==="buy" ? findOrder(it.tripId,it.customer||"") : null;
+/* 商品都被刪掉、又沒記過任何金額的訂單是殘留資料，清掉；有記過錢的留著讓你自己處理 */
+function pruneOrders(){
+  const live=new Set(S.items.filter(i=>i.kind==="buy").map(i=>(i.tripId||"")+"\u0001"+(i.customer||"")));
+  const dead=S.orders.filter(o=>!live.has((o.tripId||"")+"\u0001"+(o.customer||"")) && !(+o.depAmt));
+  if(!dead.length) return 0;
+  const ids=new Set(dead.map(o=>o.id));
+  S.orders=S.orders.filter(o=>!ids.has(o.id));
+  dead.forEach(o=>cloudDelOrder(o.id));
+  return dead.length;
+}
 function orderItems(o){
   return S.items.filter(i=>i.kind==="buy" && (i.tripId||"")===(o.tripId||"") && (i.customer||"")===(o.customer||""));
 }
@@ -833,7 +913,7 @@ function orderSum(o){
     if(it.state==="unavailable"){ chargeMiss+=m.charge; nMiss++; return; }
     charge+=m.charge;                                 /* 報價總額：含還沒買的 */
     if(it.state==="bought"){                          /* 真的花出去的錢只算買到的 */
-      nBought++; chargeGot+=m.charge; cost+=m.cost; tax+=m.tax;
+      nBought++; chargeGot+=m.charge; cost+=m.cost; tax+=m.refund;
     } else nTodo++;
   });
   const depAuto = charge*((+S.set.depositPct||0)/100);
@@ -878,14 +958,17 @@ function calc(it){
   const sub=price*qty;
   const r=(+S.set.taxRate||0)/100;
   const autoTax = r>0 ? sub/(1+r)*r : 0;
-  const tax = (it.taxOv===""||it.taxOv==null) ? autoTax : +it.taxOv;
+  /* 店頭免稅＝結帳當下已折抵，沒有稅可以再退；機場退稅＝實付含稅，之後才拿得回來 */
+  const mode = RMODE(it);
+  const refund = (it.taxOv===""||it.taxOv==null) ? (mode==="airport" ? autoTax : 0) : +it.taxOv;
+  const tax = autoTax;                       /* 理論稅額：推估成本與「以退稅後價報價」時用 */
   const al = allocFor(it);
   const manualCard = (it.cardTwd===""||it.cardTwd==null) ? null : +it.cardTwd;
   const manualYen  = (it.paidYen===""||it.paidYen==null) ? null : +it.paidYen;
   const paid = manualYen!=null ? manualYen : (al && al.yen!=null ? al.yen : null);
   const yenOut = paid!=null
-    ? (S.set.refundMode==="airport" ? Math.max(0, paid - paid/(1+r)*r) : paid)
-    : (sub - tax);
+    ? (mode==="airport" ? Math.max(0, paid - paid/(1+r)*r) : paid)
+    : (mode==="airport" ? sub - autoTax : sub - autoTax);
   const fee = 1 + (+S.set.cardFeePct||0)/100;
   const costEst = yenOut*RR(it)*fee;
   let cost=costEst, src="est";
@@ -896,7 +979,7 @@ function calc(it){
   const autoCharge = base*RS(it);
   const charge = it.kind==="self" ? 0
     : ((it.chargeOv===""||it.chargeOv==null) ? autoCharge : +it.chargeOv);
-  return {qty, sub, tax, paid, yenOut, costEst, cost, src,
+  return {qty, sub, tax, refund, mode, paid, yenOut, costEst, cost, src,
           isActual: src==="card"||src==="checkout",
           charge, profit: it.kind==="self" ? 0 : charge-cost};
 }
@@ -989,11 +1072,11 @@ function cardOf(it){
   const costLab = SRC_LAB[m.src]||"我的成本";
   const money = it.kind==="self"
     ? `<div class="row"><span class="lab">標價小計</span><i class="dots"></i><span class="val num">${yen(m.sub)}</span></div>
-       <div class="row tax"><span class="lab">可退稅</span><i class="dots"></i><span class="val num">−${yen(m.tax)}</span></div>
+       ${m.refund?`<div class="row tax"><span class="lab">可退稅</span><i class="dots"></i><span class="val num">−${yen(m.refund)}</span></div>`:""}
        ${paidRow}
        <div class="row total ${m.isActual?"actual":""}"><span class="lab">自付成本 · ${costLab}</span><i class="dots"></i><span class="val num" style="color:var(--ink)">${twd(m.cost)}</span></div>`
     : `<div class="row"><span class="lab">標價小計</span><i class="dots"></i><span class="val num">${yen(m.sub)}</span></div>
-       <div class="row tax"><span class="lab">可退稅</span><i class="dots"></i><span class="val num">−${yen(m.tax)}</span></div>
+       ${m.refund?`<div class="row tax"><span class="lab">可退稅</span><i class="dots"></i><span class="val num">−${yen(m.refund)}</span></div>`:""}
        ${paidRow}
        <div class="row ${m.isActual?"actual":""}"><span class="lab">${costLab}</span><i class="dots"></i><span class="val num">${twd(m.cost)}</span></div>
        <div class="row"><span class="lab">跟客人收</span><i class="dots"></i><span class="val num">${twd(m.charge)}</span></div>
@@ -1082,7 +1165,7 @@ function statSums(list){
   });
   let bQty=0; buys.forEach(it=>{ bQty+=Math.max(1,+it.qty||1); });
   let sCost=0,sTax=0,sQty=0;
-  selfs.forEach(it=>{ const m=calc(it); sQty+=m.qty; if(it.state!=="bought") return; sCost+=m.cost; sTax+=m.tax; });
+  selfs.forEach(it=>{ const m=calc(it); sQty+=m.qty; if(it.state!=="bought") return; sCost+=m.cost; sTax+=m.refund; });
   return {depWait,depHeld,balWait,depRefund,bCost,bTax,bProfit,bQty,sCost,sTax,sQty,
           nBuy:buys.length, nSelf:selfs.length, nOrd:ords.length};
 }
@@ -1135,7 +1218,7 @@ function handle(act,it){
   if(act==="dup"){ dupItem(it); return; }
   if(act==="del"){
     if(confirm(`刪除「${it.nameZh||"這筆"}」？`)){
-      S.items=S.items.filter(x=>x.id!==it.id); save(); cloudDel(it.id); render(); toast("已刪除");
+      S.items=S.items.filter(x=>x.id!==it.id); pruneOrders(); save(); cloudDel(it.id); render(); repaintTab(); toast("已刪除");
     }
   }
   if(act==="edit") openSheet(it);
@@ -1192,19 +1275,32 @@ function openSheet(it){
     form.elements.chargeOv.value = (it.chargeOv===""||it.chargeOv==null)?"":it.chargeOv;
     form.elements.paidYen.value = (it.paidYen===""||it.paidYen==null)?"":it.paidYen;
     form.elements.cardTwd.value = (it.cardTwd===""||it.cardTwd==null)?"":it.cardTwd;
-    form.elements.rateSell.value = it.rateSell ?? S.set.rateSell;
-    form.elements.rateReal.value = it.rateReal ?? S.set.rateReal;
+    form.elements.rateSell.value = it.rateSell ?? defRS();
     form.elements.tripId.value = it.tripId || (S.trips[0]&&S.trips[0].id) || "";
     form.elements.orderDate.value = it.orderDate || today();
   }else{
     form.elements.qty.value=1; form.elements.kind.value="buy"; form.elements.state.value="todo";
-    form.elements.rateSell.value=defRS(); form.elements.rateReal.value=defRR();
+    form.elements.rateSell.value=defRS();
     form.elements.orderDate.value=today();
   }
-  syncKind();
+  syncKind(); syncAdv();
   paintImg(); updateCalc();
   sheet.setAttribute("open",""); 
   setTimeout(()=>form.elements.nameZh.focus(),60);
+}
+/* 進階區：填過東西就自動展開，順便在標題標出是哪幾項 */
+function syncAdv(){
+  const box=document.getElementById("advBox"), hint=document.getElementById("advHint");
+  if(!box) return;
+  const on=[];
+  if(form.elements.state.value!=="todo") on.push("狀態");
+  if(form.elements.paidYen.value!=="") on.push("實付");
+  if(form.elements.cardTwd.value!=="") on.push("刷卡");
+  if(form.elements.taxOv.value!=="") on.push("退稅");
+  if(form.elements.chargeOv.value!=="") on.push("實收");
+  if(form.elements.note.value.trim()!=="") on.push("備註");
+  hint.textContent = on.length ? "· "+on.join("、") : "· 狀態、檔期、日期、實付、刷卡、退稅、實收、備註";
+  if(on.length) box.setAttribute("open","");
 }
 function closeSheet(){ sheet.removeAttribute("open"); editId=null; pendingImg=null; }
 sheet.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeSheet);
@@ -1218,7 +1314,7 @@ function paintImg(){
 }
 document.getElementById("imgClear").onclick=()=>{pendingImg=null;paintImg();};
 document.getElementById("useNow").onclick=()=>{
-  form.elements.rateSell.value=S.set.rateSell; form.elements.rateReal.value=S.set.rateReal; updateCalc();
+  form.elements.rateSell.value=S.set.rateSell; updateCalc();
 };
 document.getElementById("img").onchange=e=>{
   const f=e.target.files&&e.target.files[0]; if(!f) return;
@@ -1250,19 +1346,19 @@ function updateCalc(){
     paidYen:form.elements.paidYen.value===""?null:form.elements.paidYen.value,
     cardTwd:form.elements.cardTwd.value===""?null:form.elements.cardTwd.value,
     rateSell:form.elements.rateSell.value===""?null:form.elements.rateSell.value,
-    rateReal:form.elements.rateReal.value===""?null:form.elements.rateReal.value
+    rateReal:null, tripId:form.elements.tripId.value
   };
   const m=calc(t);
   const pRow = m.paid!=null
     ? `<div class="row paid"><span class="lab">實付日幣</span><i class="dots"></i><span class="val num">${yen(m.paid)}</span></div>` : "";
-  const cLab = m.isActual ? "刷卡帳單（實際）" : "我的成本（預估，含 "+S.set.cardFeePct+"% 手續費）";
+  const cLab = m.isActual ? "刷卡帳單（實際）" : "我的成本（預估，匯率 "+RR(t)+"，含 "+S.set.cardFeePct+"% 手續費）";
   document.getElementById("calcBox").innerHTML = t.kind==="self"
     ? `<div class="row"><span class="lab">標價小計</span><i class="dots"></i><span class="val num">${yen(m.sub)}</span></div>
-       <div class="row tax"><span class="lab">可退稅</span><i class="dots"></i><span class="val num">−${yen(m.tax)}</span></div>
+       ${m.refund?`<div class="row tax"><span class="lab">可退稅（${RMODE_T[m.mode]}）</span><i class="dots"></i><span class="val num">−${yen(m.refund)}</span></div>`:""}
        ${pRow}
        <div class="row total"><span class="lab">自付成本</span><i class="dots"></i><span class="val num" style="color:var(--ink)">${twd(m.cost)}</span></div>`
     : `<div class="row"><span class="lab">標價小計</span><i class="dots"></i><span class="val num">${yen(m.sub)}</span></div>
-       <div class="row tax"><span class="lab">可退稅</span><i class="dots"></i><span class="val num">−${yen(m.tax)}</span></div>
+       ${m.refund?`<div class="row tax"><span class="lab">可退稅（${RMODE_T[m.mode]}）</span><i class="dots"></i><span class="val num">−${yen(m.refund)}</span></div>`:""}
        ${pRow}
        <div class="row ${m.isActual?"actual":""}"><span class="lab">${cLab}</span><i class="dots"></i><span class="val num">${twd(m.cost)}</span></div>
        <div class="row"><span class="lab">跟客人收</span><i class="dots"></i><span class="val num">${twd(m.charge)}</span></div>
@@ -1275,7 +1371,7 @@ form.onsubmit=e=>{
   const d=Object.fromEntries(new FormData(form).entries());
   /* 自購時客人／訂金／實收是 disabled，不會出現在 FormData，統一補空字串 */
   ["nameZh","nameJa","spec","url","qty","kind","customer","store","category",
-   "price","state","note","orderDate","rateSell","rateReal","tripId",
+   "price","state","note","orderDate","rateSell","tripId",
    "taxOv","chargeOv","paidYen","cardTwd"].forEach(k=>{ if(d[k]===undefined) d[k]=""; });
   if(editId){
     const old=S.items.find(x=>x.id===editId), oo=old?orderOf(old):null;
@@ -1295,8 +1391,9 @@ form.onsubmit=e=>{
     chargeOv: d.chargeOv===""?null:+d.chargeOv,
     paidYen: d.paidYen===""?null:+d.paidYen,
     cardTwd: d.cardTwd===""?null:+d.cardTwd,
-    rateSell: d.rateSell===""?S.set.rateSell:+d.rateSell,
-    rateReal: d.rateReal===""?S.set.rateReal:+d.rateReal,
+    rateSell: d.rateSell===""?defRS():+d.rateSell,
+    /* 實際匯率不再逐筆填，留空＝跟著檔期／設定走；既有資料保留原值 */
+    rateReal: editId ? ((S.items.find(x=>x.id===editId)||{}).rateReal ?? null) : null,
     tripId: d.tripId || S.cur!=="all" && S.cur || (S.trips[0]&&S.trips[0].id) || "",
     orderDate: d.orderDate||today(),
     img: pendingImg
@@ -1310,11 +1407,11 @@ form.onsubmit=e=>{
 document.getElementById("delBtn").onclick=()=>{
   if(!editId) return;
   if(confirm("刪除這筆？")){
-    const _d=editId; S.items=S.items.filter(x=>x.id!==editId); save(); cloudDel(_d); closeSheet(); render(); toast("已刪除");
+    const _d=editId; S.items=S.items.filter(x=>x.id!==editId); pruneOrders(); save(); cloudDel(_d); closeSheet(); render(); repaintTab(); toast("已刪除");
   }
 };
 document.getElementById("addBtn").onclick=()=>{
-  if(!S.trips.length){ if(!newTrip()) return; }
+  if(!S.trips.length){ openTrip(null); toast("先建一個檔期，再開始加商品"); return; }
   openSheet(null);
 };
 
@@ -1326,6 +1423,12 @@ function renderLedger(){
   if(!buys.length){ box.innerHTML=`<div class="empty"><h3>還沒有代購項目</h3><p>新增商品時把類型選成「代購」並填上客人，這裡就會自動分組結帳。</p></div>`; return; }
   const seen=new Set(), ords=[];
   buys.forEach(it=>{ const o=getOrder(it.tripId,it.customer||""); if(!seen.has(o.id)){ seen.add(o.id); ords.push(o); } });
+  /* 商品被刪光但還記著訂金的，不能默默消失 */
+  S.orders.forEach(o=>{
+    if(seen.has(o.id)) return;
+    if(S.cur!=="all" && o.tripId!==S.cur) return;
+    if(+o.depAmt) { seen.add(o.id); ords.push(o); }
+  });
   const PH={"待收訂金":"wait","採購中":"go","待收尾款":"mid","待退訂金":"alert","全部買不到":"done","已結清":"done"};
   ords.sort((a,b)=>{
     const r={"待收尾款":0,"待退訂金":1,"待收訂金":2,"採購中":3,"全部買不到":4,"已結清":5};
@@ -1400,8 +1503,9 @@ function renderLedger(){
       ${sale}
       <table class="lt"><thead><tr><th>商品</th><th class="n">件</th><th class="n">應收</th><th class="n">匯率</th><th class="n">狀態</th></tr></thead><tbody>${rows}</tbody></table>
     </section>`;
-  }).join("");
+  }).join("") + auditPanel();
 
+  box.querySelectorAll("[data-audit]").forEach(b=>b.onclick=()=>auditAction(b.dataset.audit));
   box.querySelectorAll("[data-dep]").forEach(inp=>{
     inp.onchange=()=>{
       const o=S.orders.find(x=>x.id===inp.dataset.dep); if(!o) return;
@@ -1411,6 +1515,107 @@ function renderLedger(){
     };
   });
   box.querySelectorAll("[data-ord]").forEach(b=>b.onclick=()=>ordAction(b.dataset.ord,b.dataset.id));
+}
+
+/* ===== 收益核帳：把統計那個數字拆開給你看 =====
+   每一項的應收、成本、成本是怎麼來的、賺多少，合計必定等於上方的「預估收益」。 */
+let auditOpen=false;
+function auditRows(){
+  const live=S.items.filter(i=>S.cur==="all"||i.tripId===S.cur);
+  return live.map(it=>{
+    const m=calc(it);
+    const o=orderOf(it);
+    let inc=false, why="";
+    if(it.kind==="self"){ why="自購，不計代購收益"; }
+    else if(it.state==="todo"){ why = depOk(it)?"還沒標「已買到」":"訂金未收、還沒買"; }
+    else if(it.state==="unavailable"){ why="買不到，不跟客人收也沒成本"; }
+    else inc=true;
+    const co=checkoutOf(it);
+    return {it, m, o, co, inc, why,
+            charge: inc?m.charge:0, cost: inc?m.cost:0, profit: inc?(m.charge-m.cost):0};
+  });
+}
+const SRC_SHORT={card:"單品刷卡", checkout:"結帳單分攤", paid:"實付日幣換算", est:"標價推估"};
+function auditPanel(){
+  const rows=auditRows();
+  const inc=rows.filter(r=>r.inc), out=rows.filter(r=>!r.inc);
+  const tCharge=inc.reduce((a,r)=>a+r.charge,0);
+  const tCost=inc.reduce((a,r)=>a+r.cost,0);
+  const tProfit=tCharge-tCost;
+  const est=inc.filter(r=>r.m.src==="est");
+  const head=`<section class="ledger audit">
+    <div class="lhead"><h3>收益核帳</h3>
+      <span class="cnt num">計入 ${inc.length} 項 · 未計入 ${out.length} 項${S.cur!=="all"?" · "+RMODE_T[(curTrip()&&curTrip().refundMode)||S.set.refundMode||"store"]:""}</span>
+      <span class="spacer"></span>
+      <button class="act" data-audit="csv">匯出明細 CSV</button>
+      <button class="act go" data-audit="toggle">${auditOpen?"收起":"展開明細"}</button></div>
+    <div class="auditsum">
+      <div><div class="k">應收合計</div><div class="v num">${twd(tCharge)}</div></div>
+      <div><div class="k">成本合計</div><div class="v num">${twd(tCost)}</div></div>
+      <div><div class="k">預估收益</div><div class="v num" style="color:${tProfit<0?"var(--shu)":"var(--matcha)"}">${twd(tProfit)}</div></div>
+    </div>`;
+  if(!auditOpen){
+    const hints=[];
+    if(out.filter(r=>r.it.kind==="buy"&&r.it.state==="todo").length)
+      hints.push(`有 <b>${out.filter(r=>r.it.kind==="buy"&&r.it.state==="todo").length}</b> 項代購還沒標「已買到」，應收和成本都沒算進去`);
+    if(est.length)
+      hints.push(`有 <b>${est.length}</b> 項的成本是<b>標價推估</b>的，跟實際卡單會有落差 — 建議到「採購」頁建結帳單`);
+    if(S.cur!=="all") hints.push(`目前只算「${tripName(S.cur)}」這個檔期，切到「— 全部檔期 —」才是全部`);
+    return head+(hints.length?`<ul class="audithint">${hints.map(h=>`<li>${h}</li>`).join("")}</ul>`:"")+`</section>`;
+  }
+  const tr=r=>{
+    const it=r.it, m=r.m;
+    const stLab = it.kind==="self" ? "自購" : (it.state==="todo"?(depOk(it)?"可以買":"等訂金"):(ST[it.state]||ST.todo).t);
+    return `<tr class="${r.inc?"":"skip"}">
+      <td>${esc(it.nameZh||"未命名")}${it.spec?`<div class="sub2">${esc(it.spec)}</div>`:""}</td>
+      <td>${it.kind==="self"?"—":esc(it.customer||"未指定")}</td>
+      <td class="n num">${m.qty}</td>
+      <td class="n">${stLab}</td>
+      <td class="n num">${yen(m.sub)}</td>
+      <td class="n num">${RS(it)}</td>
+      <td class="n num">${r.inc?twd(m.charge):"—"}</td>
+      <td class="n num">${r.inc?twd(m.cost):"—"}</td>
+      <td class="n"><span class="srctag ${m.src}">${SRC_SHORT[m.src]}</span>${r.co?`<div class="sub2">${esc(r.co.store||"")}${r.co.label?" "+esc(r.co.label):""}</div>`:""}</td>
+      <td class="n num" style="color:${!r.inc?"var(--ink3)":(r.profit<0?"var(--shu)":"var(--matcha)")}">${r.inc?twd(r.profit):"—"}</td>
+      <td class="sub2">${esc(r.why)}</td>
+    </tr>`;
+  };
+  return head+`<div class="audittbl"><table class="lt at">
+    <thead><tr><th>商品</th><th>客人</th><th class="n">件</th><th class="n">狀態</th><th class="n">標價¥</th><th class="n">匯率</th><th class="n">應收</th><th class="n">成本</th><th class="n">成本來源</th><th class="n">賺</th><th>未計入原因</th></tr></thead>
+    <tbody>${inc.map(tr).join("")}${out.map(tr).join("")}</tbody>
+    <tfoot><tr><td colspan="6">合計（只含計入的 ${inc.length} 項）</td>
+      <td class="n num">${twd(tCharge)}</td><td class="n num">${twd(tCost)}</td><td></td>
+      <td class="n num" style="color:${tProfit<0?"var(--shu)":"var(--matcha)"}">${twd(tProfit)}</td><td></td></tr></tfoot>
+  </table></div></section>`;
+}
+function auditAction(act){
+  if(act==="toggle"){ auditOpen=!auditOpen; renderLedger(); return; }
+  if(act==="csv"){
+    const rows=auditRows();
+    const H=["商品","日文名","規格","客人","店家","類型","數量","狀態","標價日幣","代購匯率","實際匯率","實付日幣","應收台幣","成本台幣","成本來源","結帳單","賺","計入收益","未計入原因","檔期"];
+    const q=v=>{const t=String(v??""); return /[",\n]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t;};
+    const lines=[H.join(",")];
+    rows.forEach(r=>{
+      const it=r.it,m=r.m;
+      lines.push([it.nameZh,it.nameJa,it.spec,it.kind==="self"?"":it.customer,it.store,
+        it.kind==="self"?"自購":"代購",m.qty,(ST[it.state]||ST.todo).t,Math.round(m.sub),
+        RS(it),RR(it),m.paid==null?"":Math.round(m.paid),
+        r.inc?Math.round(m.charge):"",r.inc?Math.round(m.cost):"",
+        SRC_SHORT[m.src],r.co?((r.co.store||"")+(r.co.label?" "+r.co.label:"")):"",
+        r.inc?Math.round(r.profit):"",r.inc?"是":"否",r.why,tripName(it.tripId)].map(q).join(","));
+    });
+    const inc=rows.filter(r=>r.inc);
+    lines.push("");
+    lines.push([q("合計（計入 "+inc.length+" 項）"),"","","","","","","","","","","",
+      Math.round(inc.reduce((a,r)=>a+r.charge,0)),Math.round(inc.reduce((a,r)=>a+r.cost,0)),
+      "","",Math.round(inc.reduce((a,r)=>a+r.profit,0)),"","",""].join(","));
+    const blob=new Blob(["\uFEFF"+lines.join("\n")],{type:"text/csv;charset=utf-8"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="收益核帳_"+(S.cur==="all"?"全部檔期":tripName(S.cur))+"_"+today()+".csv";
+    a.click(); URL.revokeObjectURL(a.href);
+    toast("已下載，用 Excel 開啟可直接跟你的帳比對");
+  }
 }
 
 function ordAction(act,id){
@@ -1503,36 +1708,70 @@ function dupItem(it){
   form.elements.taxOv.value=""; form.elements.chargeOv.value=(copy.chargeOv==null?"":copy.chargeOv);
   form.elements.paidYen.value=""; form.elements.cardTwd.value="";
   form.elements.rateSell.value=copy.rateSell ?? defRS();
-  form.elements.rateReal.value=copy.rateReal ?? defRR();
   form.elements.orderDate.value=today();
-  syncKind(); paintImg(); updateCalc();
+  syncKind(); syncAdv(); paintImg(); updateCalc();
   sheet.setAttribute("open","");
   setTimeout(()=>{ const c=form.elements.customer; if(!c.disabled){ c.focus(); c.select(); } else form.elements.qty.focus(); },60);
   toast("已複製內容，改一下客人或數量就能存");
 }
 
 /* ---------- 檔期管理 ---------- */
-function newTrip(){
-  const n=prompt("新檔期名稱（例如：2026/10 東京）");
-  if(n===null) return null;
-  const name=n.trim(); if(!name){ toast("請輸入名稱"); return null; }
-  const t={id:newId("t"),name,start:"",end:"",rateSell:null,rateReal:null,note:"",archived:false};
-  S.trips.push(t); S.cur=t.id; save(); cloudPutTrip(t); render();
-  toast("已建立「"+name+"」");
-  return t;
+const tripSheet=document.getElementById("tripSheet"), tripForm=document.getElementById("tripForm");
+let tripEditId=null;
+function openTrip(t){
+  tripEditId=t?t.id:null;
+  document.getElementById("tripTitle").textContent=t?"編輯檔期":"新增檔期";
+  tripForm.reset();
+  tripForm.elements.name.value=t?t.name:"";
+  tripForm.elements.refundMode.value=(t&&t.refundMode)||S.set.refundMode||"store";
+  tripForm.elements.start.value=t?(t.start||""):"";
+  tripForm.elements.end.value=t?(t.end||""):"";
+  tripForm.elements.rateSell.value=(t&&t.rateSell!=null&&t.rateSell!=="")?t.rateSell:"";
+  tripForm.elements.rateReal.value=(t&&t.rateReal!=null&&t.rateReal!=="")?t.rateReal:"";
+  tripForm.elements.note.value=t?(t.note||""):"";
+  tripSheet.setAttribute("open","");
+  setTimeout(()=>tripForm.elements.name.focus(),60);
 }
+tripSheet.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>tripSheet.removeAttribute("open"));
+tripForm.onsubmit=e=>{
+  e.preventDefault();
+  const name=tripForm.elements.name.value.trim();
+  if(!name){ toast("請輸入檔期名稱"); return; }
+  const rs=tripForm.elements.rateSell.value.trim(), rr=tripForm.elements.rateReal.value.trim();
+  let t=tripEditId?trip(tripEditId):null;
+  const isNew=!t;
+  if(isNew) t={id:newId("t"),archived:false};
+  t.name=name;
+  t.refundMode=tripForm.elements.refundMode.value;
+  t.start=tripForm.elements.start.value;
+  t.end=tripForm.elements.end.value;
+  t.rateSell=rs===""?null:+rs;
+  t.rateReal=rr===""?null:+rr;
+  t.note=tripForm.elements.note.value.trim();
+  if(isNew){ S.trips.push(t); S.cur=t.id; }
+  save(); cloudPutTrip(t); tripSheet.removeAttribute("open");
+  render(); repaintTab();
+  toast(isNew?"已建立「"+name+"」":"檔期已更新");
+  if(pendingAdd){ const p=pendingAdd; pendingAdd=null; setTimeout(()=>quickAdd(p),80); }
+};
+/* 還沒有任何檔期時，新增商品前先擋下來 */
+function newTrip(){ openTrip(null); return null; }
+
+/* 口徑跟統計面板一致：代購與自購分開，且只算已買到的 */
 function tripSums(id){
   const arr=tripItems(id);
-  let cost=0,charge=0,profit=0;
+  let cost=0,charge=0,profit=0,selfCost=0;
   arr.forEach(it=>{
-    if(it.state==="unavailable") return;
-    const m=calc(it); cost+=m.cost; charge+=m.charge; profit+=m.profit;
+    if(it.state!=="bought") return;
+    const m=calc(it);
+    if(it.kind==="self"){ selfCost+=m.cost; return; }
+    cost+=m.cost; charge+=m.charge; profit+=m.profit;
   });
   let depWait=0,balWait=0;
   S.orders.filter(o=>(o.tripId||"")===id).forEach(o=>{
     const u=orderSum(o); depWait+=u.depWait; balWait+=u.balDue;
   });
-  return {n:arr.length,cost,charge,profit,depWait,balWait};
+  return {n:arr.length,cost,selfCost,charge,profit,depWait,balWait};
 }
 function renderTrips(){
   const box=document.getElementById("tripList"); if(!box) return;
@@ -1549,13 +1788,14 @@ function renderTrips(){
         <button class="act" data-t="arch" data-id="${t.id}">${t.archived?"取消封存":"封存"}</button>
         <button class="act del" data-t="del" data-id="${t.id}">刪除</button>
       </div>
-      <div class="meta">${t.start||t.end?`${t.start||"?"} – ${t.end||"?"}　·　`:""}${u.n} 筆${(t.rateSell!=null&&t.rateSell!=="")?`　·　檔期匯率 ${t.rateSell}`:""}${t.note?`　·　${esc(t.note)}`:""}</div>
+      <div class="meta">${t.start||t.end?`${t.start||"?"} – ${t.end||"?"}　·　`:""}${u.n} 筆　·　${RMODE_T[(t.refundMode||S.set.refundMode||"store")]}${(t.rateSell!=null&&t.rateSell!=="")?`　·　代購匯率 ${t.rateSell}`:""}${(t.rateReal!=null&&t.rateReal!=="")?`　·　實際匯率 ${t.rateReal}`:""}${t.note?`　·　${esc(t.note)}`:""}</div>
       <div class="sums">
-        <span>先墊 <b>${twd(u.cost)}</b></span>
+        <span>代購刷卡 <b>${twd(u.cost)}</b></span>
         <span>應收 <b>${twd(u.charge)}</b></span>
-        <span style="color:var(--amber)">待收訂金 <b>${twd(u.depWait)}</b></span>
-        <span style="color:var(--shu)">待收尾款 <b>${twd(u.balWait)}</b></span>
+        ${u.depWait?`<span style="color:var(--amber)">待收訂金 <b>${twd(u.depWait)}</b></span>`:""}
+        ${u.balWait?`<span style="color:var(--shu)">待收尾款 <b>${twd(u.balWait)}</b></span>`:""}
         <span style="color:var(--matcha)">賺 <b>${twd(u.profit)}</b></span>
+        ${u.selfCost?`<span style="color:var(--ink3)">自購 <b>${twd(u.selfCost)}</b></span>`:""}
       </div>
     </div>`;
   }).join("");
@@ -1563,16 +1803,7 @@ function renderTrips(){
 }
 function tripAction(act,id){
   const t=trip(id); if(!t) return;
-  if(act==="edit"){
-    const name=prompt("檔期名稱",t.name); if(name===null) return;
-    const start=prompt("出發日（YYYY-MM-DD，可留空）",t.start||""); if(start===null) return;
-    const end=prompt("回國日（YYYY-MM-DD，可留空）",t.end||""); if(end===null) return;
-    const rs=prompt("這個檔期的代購匯率（留空＝用今日設定）",t.rateSell??""); if(rs===null) return;
-    const rr=prompt("這個檔期的實際匯率（留空＝用今日設定）",t.rateReal??""); if(rr===null) return;
-    t.name=name.trim()||t.name; t.start=start.trim(); t.end=end.trim();
-    t.rateSell=rs.trim()===""?null:+rs; t.rateReal=rr.trim()===""?null:+rr;
-    save(); cloudPutTrip(t); render(); renderSettings(); toast("已更新");
-  }
+  if(act==="edit") openTrip(t);
   if(act==="arch"){
     t.archived=!t.archived;
     if(t.archived && S.cur===id){ const o=S.trips.find(x=>!x.archived); S.cur=o?o.id:"all"; }
@@ -1804,7 +2035,7 @@ function coPaintSum(){
       if(odd) msg+=`<div class="row" style="color:var(--amber)"><span class="lab">⚠ 金額對不太起來</span><i class="dots"></i><span class="val" style="font-size:11.5px">${pct>1.3?"實付比標價高很多，是不是有商品沒勾到？":"實付比標價低很多，確認一下金額或勾選的項目"}</span></div>`;
     }
     if(tot!=null) msg+=`<div class="row total actual"><span class="lab">刷卡合計（含手續費）</span><i class="dots"></i><span class="val num">${twd(tot)}</span></div>`;
-    else if(y!=null) msg+=`<div class="row total"><span class="lab">推估成本</span><i class="dots"></i><span class="val num">${twd(y*(+S.set.rateReal||0)*(1+(+S.set.cardFeePct||0)/100))}</span></div>`;
+    else if(y!=null) msg+=`<div class="row total"><span class="lab">推估成本</span><i class="dots"></i><span class="val num">${twd(y*RR(members[0]||{})*(1+(+S.set.cardFeePct||0)/100))}</span></div>`;
     msg+=`<div class="row"><span class="lab">分攤方式</span><i class="dots"></i><span class="val" style="font-size:11.5px;color:var(--ink3)">依各商品標價比例</span></div>`;
   }
   document.getElementById("coCalc").innerHTML=msg;
@@ -1931,7 +2162,7 @@ function importRows(text,dryRun){
     const tn=get(r,"tripName");
     if(tn){
       let t=S.trips.find(x=>x.name===tn);
-      if(!t && !dryRun){ t={id:newId("t"),name:tn,start:"",end:"",rateSell:null,rateReal:null,note:"",archived:false}; S.trips.push(t); cloudPutTrip(t); }
+      if(!t && !dryRun){ t={id:newId("t"),name:tn,start:"",end:"",rateSell:null,rateReal:null,refundMode:S.set.refundMode||"store",note:"",archived:false}; S.trips.push(t); cloudPutTrip(t); }
       if(t) tripId=t.id;
       else if(dryRun && !seenTrip.has(tn)){ seenTrip.add(tn); warn.push("會新建檔期「"+tn+"」"); }
     }
@@ -1941,7 +2172,6 @@ function importRows(text,dryRun){
     let st=IMP_STATE[stRaw] || "todo";
     const tObj=S.trips.find(x=>x.id===tripId);
     const defSell=(tObj&&tObj.rateSell!=null&&tObj.rateSell!=="")?tObj.rateSell:S.set.rateSell;
-    const defReal=(tObj&&tObj.rateReal!=null&&tObj.rateReal!=="")?tObj.rateReal:S.set.rateReal;
     out.push({
       id:newId("i"), ts:Date.now()-out.length, tripId,
       nameZh, nameJa:get(r,"nameJa"), spec:get(r,"spec"), url:get(r,"url"),
@@ -1951,7 +2181,7 @@ function importRows(text,dryRun){
       price, state:st, note:get(r,"note"),
       orderDate:get(r,"orderDate")||today(),
       rateSell:num(get(r,"rateSell"))??defSell,
-      rateReal:num(get(r,"rateReal"))??defReal,
+      rateReal:num(get(r,"rateReal")),           /* 沒填＝跟著檔期 */
       taxOv:num(get(r,"taxOv")), chargeOv:num(get(r,"chargeOv")),
       paidYen:num(get(r,"paidYen")), cardTwd:num(get(r,"cardTwd")), img:null,
       _depPaid: IMP_DEP.includes(stRaw), _balPaid: IMP_BAL.includes(stRaw),
@@ -1992,15 +2222,15 @@ function renderSettings(){
   document.getElementById("viewSettings").innerHTML=`
     <section class="panel">
       <h3>匯率與退稅</h3>
-      <p class="hint">這裡設的是<b>新增商品時要帶入的匯率</b>。每一筆商品會各自記住自己成交當下的匯率，之後改這裡不會動到已經報價出去的單。</p>
+      <p class="hint">這裡是<b>預設值</b>。代購匯率會在新增商品時複製到每一筆、成交後凍結，所以改這裡不會動到已經報價出去的單。<b>實際匯率和退稅方式則是跟著檔期走</b>，在「檔期管理」裡各別設定 —— 2026/11 起日本改成出境時還付，舊檔期不會被新設定影響。</p>
       <div class="fgrid">
-        <label class="f"><span class="lb">今日實際匯率 <em>　1 日圓 = ? 台幣</em></span><input class="i num" id="sReal" type="number" step="0.0001" value="${s.rateReal}"></label>
+        <label class="f"><span class="lb">實際匯率（預設）<em>　檔期沒設定時用這個</em></span><input class="i num" id="sReal" type="number" step="0.0001" value="${s.rateReal}"></label>
         <label class="f"><span class="lb">今日代購匯率 <em>　跟客人報價用</em></span><input class="i num" id="sSell" type="number" step="0.0001" value="${s.rateSell}"></label>
         <label class="f"><span class="lb">消費稅率 %<em>　日本現行 10%</em></span><input class="i num" id="sTax" type="number" step="0.1" value="${s.taxRate}"></label>
         <label class="f"><span class="lb">海外刷卡手續費 %<em>　多數台灣卡 1.5%</em></span><input class="i num" id="sFee" type="number" min="0" max="5" step="0.1" value="${s.cardFeePct}"></label>
-        <label class="f"><span class="lb">退稅方式</span>
+        <label class="f"><span class="lb">退稅方式<em>　新檔期的預設值</em></span>
           <select class="i" id="sMode">
-            <option value="store"${s.refundMode==="store"?" selected":""}>店頭免稅（結帳就付稅抜價）</option>
+            <option value="store"${s.refundMode==="store"?" selected":""}>店頭免稅（結帳就付稅拔價）</option>
             <option value="airport"${s.refundMode==="airport"?" selected":""}>機場退稅（結帳付含稅價）</option>
           </select>
         </label>
@@ -2014,15 +2244,15 @@ function renderSettings(){
       </div>
       <div class="btnrow">
         <button class="btn primary" id="saveSet">儲存設定</button>
-        <button class="btn" id="applyRate">把今日匯率套用到未鎖定項目</button>
+        <button class="btn" id="applyRate">把今日代購匯率套用到未鎖定項目</button>
       </div>
-      <p class="hint" style="margin:12px 0 0">目前有 <b>${unlockedCount()}</b> 筆還沒收訂金（或是自購），匯率可以重新套用。已經收過訂金的客人不會被動到。</p>
+      <p class="hint" style="margin:12px 0 0">目前有 <b>${unlockedCount()}</b> 筆還沒收訂金（或是自購），代購匯率可以重新套用。已經收過訂金的客人不會被動到。</p>
     </section>
 
     <section class="panel">
       <h3>檔期管理</h3>
-      <p class="hint">每一趟代購是一個檔期。商品、對帳、統計都會依照上方選擇的檔期分開計算。</p>
-      <div class="btnrow" style="margin-top:0 0 12px"><button class="btn primary" id="tripAdd">新增檔期</button></div>
+      <p class="hint">每一趟代購是一個檔期。商品、對帳、統計都會依照上方選擇的檔期分開計算。<b>退稅方式、實際匯率</b>也設在這裡，各趟互不影響。</p>
+      <div class="btnrow" style="margin-top:0 0 12px"><button class="btn primary" id="tripAdd">＋ 新增檔期</button></div>
       <div id="tripList" style="margin-top:12px"></div>
     </section>
 
@@ -2156,15 +2386,17 @@ function renderSettings(){
       <h3>算法說明</h3>
       <p class="hint" style="margin-bottom:10px">每一筆的錢是這樣算出來的，有疑問時可以回來對。</p>
       <div class="row"><span class="lab">標價小計</span><i class="dots"></i><span class="val">當地單價 × 數量</span></div>
-      <div class="row"><span class="lab">退稅</span><i class="dots"></i><span class="val">標價小計 ÷ (1 + 稅率) × 稅率</span></div>
-      <div class="row"><span class="lab">日圓實際支出</span><i class="dots"></i><span class="val">有結帳單就用分攤到的金額${S.set.refundMode==="airport"?"（再扣退稅）":""}，否則用 標價小計 − 退稅</span></div>
+      <div class="row"><span class="lab">理論稅額</span><i class="dots"></i><span class="val">標價小計 ÷ (1 + 稅率) × 稅率</span></div>
+      <div class="row tax"><span class="lab">可退稅金額</span><i class="dots"></i><span class="val"><b>店頭免稅</b>＝0（結帳已折抵）；<b>機場退稅</b>＝理論稅額</span></div>
+      <div class="row"><span class="lab">日圓實際支出</span><i class="dots"></i><span class="val">有結帳單就用分攤到的金額（機場退稅時再扣掉會退回來的稅），否則用 標價小計 − 理論稅額</span></div>
       <div class="row"><span class="lab">跟客人收</span><i class="dots"></i><span class="val">${S.set.base==="incl"?"標價小計":"退稅後金額"} × <b>本筆</b>代購匯率</span></div>
       <div class="row total"><span class="lab">賺</span><i class="dots"></i><span class="val">跟客人收 − 我的成本</span></div>
       <p class="hint" style="margin:14px 0 6px"><b>成本的四種來源</b>，由準到粗，有哪個就用哪個：</p>
       <div class="row actual"><span class="lab">1　單品刷卡台幣</span><i class="dots"></i><span class="val">在商品裡填了「刷卡帳單 NT$」</span></div>
       <div class="row actual"><span class="lab">2　結帳單分攤</span><i class="dots"></i><span class="val">整張發票的刷卡台幣＋手續費，依標價比例分到每項</span></div>
       <div class="row"><span class="lab">3　實付日幣換算</span><i class="dots"></i><span class="val">實付 ¥ × <b>本筆</b>實際匯率 × (1 + ${S.set.cardFeePct}% 手續費)</span></div>
-      <div class="row"><span class="lab">4　標價推估</span><i class="dots"></i><span class="val">(標價小計 − 退稅) × 實際匯率 × (1 + ${S.set.cardFeePct}%)</span></div>
+      <div class="row"><span class="lab">4　標價推估</span><i class="dots"></i><span class="val">(標價小計 − 理論稅額) × 實際匯率 × (1 + ${S.set.cardFeePct}%)</span></div>
+      <p class="hint" style="margin:10px 0 0">實際匯率取用順序：<b>檔期設定 → 今日設定</b>。2026/10 之前建立的商品若有自己的匯率，會沿用原值不動。</p>
       <p class="hint" style="margin:12px 0 0">店家結帳是一張發票一次刷，不是一件一件刷，所以成本請走「採購」頁的<b>結帳</b>功能：勾選這張發票買了哪些、填實付日幣，卡單出來再補台幣和手續費。</p>
     </section>`;
 
@@ -2175,8 +2407,8 @@ function renderSettings(){
       const o=orderOf(i); return !(o&&o.depPaid);
     });
     if(!t.length){ toast("沒有未鎖定的項目"); return; }
-    if(!confirm("把 "+t.length+" 筆未鎖定項目的匯率改成 代購 "+S.set.rateSell+" ／ 實際 "+S.set.rateReal+" ？")) return;
-    t.forEach(i=>{ i.rateSell=S.set.rateSell; i.rateReal=S.set.rateReal; cloudPut(i); });
+    if(!confirm("把 "+t.length+" 筆未鎖定項目的代購匯率改成 "+S.set.rateSell+" ？")) return;
+    t.forEach(i=>{ i.rateSell=S.set.rateSell; cloudPut(i); });
     save(); render(); renderSettings(); toast("已套用到 "+t.length+" 筆");
   };
   document.getElementById("saveSet").onclick=()=>{
@@ -2191,7 +2423,7 @@ function renderSettings(){
     save(); migrateTrips(); rateNote(); render(); renderSettings(); toast("設定已儲存");
   };
   renderTrips();
-  const ta=document.getElementById("tripAdd"); if(ta) ta.onclick=()=>{ newTrip(); renderSettings(); };
+  const ta=document.getElementById("tripAdd"); if(ta) ta.onclick=()=>openTrip(null);
   const fw=document.getElementById("fbWarn");
   if(fw){
     const u0=FB&&FB.auth&&FB.auth.currentUser;
@@ -2419,10 +2651,15 @@ function bookmarklet(){
   })()`.replace(/\s*\n\s*/g," ");
   return "javascript:"+encodeURIComponent(code);
 }
+let pendingAdd=null;
 function quickAdd(raw){
   let d; try{ d=JSON.parse(decodeURIComponent(raw)); }catch(e){ return false; }
   if(!d||!d.n) return false;
-  if(!S.trips.length && !newTrip()) return false;
+  if(!S.trips.length){            /* 還沒有檔期：先請他建一個，建完自動接著帶入 */
+    pendingAdd=raw; openTrip(null);
+    toast("先建一個檔期，建好就會自動帶入這件商品");
+    return false;
+  }
   document.querySelector('.tab[data-view="list"]').click();
   openSheet(null);
   form.elements.nameZh.value=String(d.n).slice(0,120);
@@ -2885,7 +3122,7 @@ window.addEventListener("fb-failed",()=>{ if(fbCfg()){ fbState="error"; paintClo
 function demo(){
   const now=Date.now();
   if(!S.trips.length){
-    S.trips=[{id:"demoTrip",name:"2026/09 東京",start:"2026-09-25",end:"2026-09-30",rateSell:0.232,rateReal:0.215,note:"範例檔期",archived:false}];
+    S.trips=[{id:"demoTrip",name:"2026/09 東京",start:"2026-09-25",end:"2026-09-30",rateSell:0.232,rateReal:0.215,refundMode:"store",note:"範例檔期",archived:false}];
     S.cur="demoTrip";
   }
   const TID=S.cur==="all"?S.trips[0].id:S.cur;
@@ -2912,7 +3149,7 @@ rateNote(); render(); paintBackup(); paintCloud();
 
 document.getElementById("bkBtn").onclick=exportBackup;
 document.getElementById("tripSel").onchange=e=>{ S.cur=e.target.value; persist(); render(); };
-document.getElementById("tripNew").onclick=()=>newTrip();
+document.getElementById("tripNew").onclick=()=>openTrip(null);
 document.getElementById("cloudBtn").onclick=()=>{
   if(fbState==="ready") cloudSignIn();
   else document.querySelector('.tab[data-view="settings"]').click();
