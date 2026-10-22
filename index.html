@@ -126,13 +126,6 @@ button{cursor:pointer}
 .stat .v{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .stat .k{font-size:11px; color:var(--ink3); white-space:nowrap}
 .stat .v{font-size:16px; font-weight:700; line-height:1.3; letter-spacing:-.01em}
-@media (min-width:1024px){
-  /* 桌機夠寬就把代購、自購並排 */
-  .stats{display:flex; gap:12px; align-items:flex-start}
-  .sgrp{flex:1 1 0; margin:10px 0}
-  .sgrp.self{flex:0 0 auto; align-self:stretch}
-}
-
 /* ---------- 篩選 ---------- */
 .filters{display:flex; gap:7px; overflow-x:auto; padding:10px 0 11px; scrollbar-width:none}
 .filters::-webkit-scrollbar{display:none}
@@ -193,23 +186,45 @@ main{padding:14px 0 100px}
 .sgrp.oneline .kv{font-size:11.5px; color:var(--ink3); white-space:nowrap}
 .sgrp.oneline .kv b{font-size:14px; color:var(--ink2); margin-left:2px}
 .sgrp.buy{border-left:3px solid var(--shu)}
-.sgrp.self{border-left:3px solid var(--ink3)}
+.sgrp.self{border-left:3px solid var(--rule2); background:color-mix(in srgb,var(--card) 60%,var(--paper))}
 .sgh{display:flex; align-items:baseline; gap:10px; margin-bottom:7px}
 .sgh b{font-size:13px; letter-spacing:.08em}
 .sgh span{font-size:11.5px; color:var(--ink3)}
 .snote{font-size:10.5px; color:var(--ink3); margin-top:6px; line-height:1.55}
-.srow{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px}
-.srow.sub{grid-template-columns:repeat(3,minmax(0,1fr)); margin-top:7px; padding-top:8px; border-top:1px dashed var(--rule)}
-.srow.sub .stat .v{font-size:14.5px; color:var(--ink2)}
+.srow{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:9px 10px}
 .srow .stat{background:transparent; border:0; padding:0; min-width:0}
 .srow .stat .k{font-size:11px; color:var(--ink3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 .srow .stat .v{font-size:16px; font-weight:600; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.srow .stat.sub .v{font-size:14.5px; color:var(--ink2)}
+/* 前四格是「還沒做完的事」，後三格是「這趟的結果」，用一條虛線分開 */
+.srow>.stat:nth-child(5){border-top:1px dashed var(--rule); padding-top:8px}
+.srow>.stat:nth-child(6){border-top:1px dashed var(--rule); padding-top:8px}
+.srow>.stat:nth-child(7){border-top:1px dashed var(--rule); padding-top:8px}
 @media(max-width:560px){
-  .srow{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .srow.sub{grid-template-columns:repeat(3,minmax(0,1fr))}
-  .srow .stat .v{font-size:14.5px}
-  .srow.sub .stat .v{font-size:13px}
+  /* 手機維持四欄兩列：七個數字兩行看完，不用一直往下捲 */
+  .srow{gap:8px}
+  .srow .stat .k{font-size:10px}
+  .srow .stat .v{font-size:13.5px}
+  .srow .stat.sub .v{font-size:13px}
+  .srow>.stat:nth-child(-n+4){border-bottom:1px dashed var(--rule); padding-bottom:8px}
+  .srow>.stat:nth-child(n+5){border-top:0; padding-top:1px}
 }
+@media(max-width:360px){
+  .srow{gap:6px}
+  .srow .stat .k{font-size:9.5px}
+  .srow .stat .v{font-size:12.5px}
+  .srow .stat.sub .v{font-size:12px}
+}
+@media (min-width:1024px){
+  /* 桌機夠寬：七個數字排成一列，分隔線改成直的 */
+  .sgrp{margin:8px 0}
+  .srow{grid-template-columns:repeat(7,minmax(0,1fr)); gap:12px}
+  .srow>.stat:nth-child(5){border-top:0; padding-top:0;
+    border-left:1px dashed var(--rule); padding-left:12px}
+  .srow>.stat:nth-child(6),.srow>.stat:nth-child(7){border-top:0; padding-top:0}
+  .srow .stat.sub .v{font-size:15.5px}
+}
+
 
 /* ---- 對帳：客人訂單 ---- */
 .ledger.ord.settled{opacity:.72}
@@ -1205,7 +1220,7 @@ function statSums(list){
 }
 function renderStats(list){
   const f=statSums(list);
-  const cell=(k,v,col)=>`<div class="stat"><div class="k">${k}</div><div class="v num"${col?` style="color:${col}"`:""}>${v}</div></div>`;
+  const cell=(k,v,col,sub)=>`<div class="stat${sub?" sub":""}"><div class="k">${k}</div><div class="v num"${col?` style="color:${col}"`:""}>${v}</div></div>`;
   const buyBlock=`
     <div class="sgrp buy">
       <div class="sgh"><b>代購</b><span>${f.nBuy} 項 · ${f.bQty} 件 · ${f.nOrd} 位客人</span></div>
@@ -1214,13 +1229,11 @@ function renderStats(list){
         ${cell("已收訂金",twd(f.depHeld),"var(--matcha)")}
         ${cell("待收尾款",twd(f.balWait),"var(--shu)")}
         ${cell("待退訂金",twd(f.depRefund),f.depRefund?"var(--shu)":"var(--ink3)")}
+        ${cell("刷卡金額",twd(f.bCost),"",1)}
+        ${cell("預估收益",twd(f.bProfit),f.bProfit<0?"var(--shu)":"var(--matcha)",1)}
+        ${cell("可退稅金額",yen(f.bTax),"",1)}
       </div>
-      <div class="srow sub">
-        ${cell("刷卡金額",twd(f.bCost))}
-        ${cell("預估收益",twd(f.bProfit),f.bProfit<0?"var(--shu)":"var(--matcha)")}
-        ${cell("可退稅金額",yen(f.bTax))}
-      </div>
-      <div class="snote">下排只計算<b>已買到</b>的商品</div>
+      <div class="snote">後三項只計算<b>已買到</b>的商品</div>
     </div>`;
   const selfBlock = f.nSelf ? `
     <div class="sgrp self oneline">
