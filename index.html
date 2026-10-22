@@ -185,6 +185,13 @@ main{padding:14px 0 100px}
 .sgrp.oneline .sp{flex:1 1 0; min-width:0}
 .sgrp.oneline .kv{font-size:11.5px; color:var(--ink3); white-space:nowrap}
 .sgrp.oneline .kv b{font-size:14px; color:var(--ink2); margin-left:2px}
+.sgrp.peek{cursor:pointer; border-left-color:var(--shu)}
+.sgrp.peek:active{background:color-mix(in srgb,var(--shu) 5%,var(--card))}
+.sgrp.oneline .kv.done{color:var(--matcha)}
+.schev{border:0; background:transparent; color:var(--ink3); font-size:13px; line-height:1;
+  padding:4px 2px 4px 8px; flex:0 0 auto}
+.schev:hover{color:var(--ink)}
+.sgh .sp{flex:1 1 0; min-width:0}
 .sgrp.buy{border-left:3px solid var(--shu)}
 .sgrp.self{border-left:3px solid var(--rule2); background:color-mix(in srgb,var(--card) 60%,var(--paper))}
 .sgh{display:flex; align-items:baseline; gap:10px; margin-bottom:7px}
@@ -715,6 +722,7 @@ textarea.i{resize:vertical; min-height:58px}
 <script>
 "use strict";
 const KEY="daigou.jp.v1";
+const BUILD="2026-10-22e";   /* 改版日期，設定頁最下面看得到，用來確認手機拿到的是不是新版 */
 const DEF_SET={rateReal:0.215, rateSell:0.23, taxRate:10, base:"incl", depositPct:50,
                cardFeePct:1.5, refundMode:"store", theme:""};
 /* 商品只管「買到沒有」。錢的事（訂金、尾款）移到客人訂單那一層，
@@ -1185,7 +1193,7 @@ function renderFlowChips(){
   const chips=DEF.filter(([k])=>counts[k]).map(([k,lab,tone])=>
     '<button class="fchip '+tone+'" data-state="'+k+'" data-on="'+(cur===k?1:0)+'">'+lab+'<b>'+counts[k]+'</b></button>');
   box.innerHTML=chips.join("");
-  box.classList.toggle("hide",!chips.length);
+  box.classList.toggle("hide",chips.length<2);   /* 只有一種狀態就不用篩了 */
   box.querySelectorAll("[data-state]").forEach(b=>{
     b.onclick=()=>{
       const sel=document.getElementById("fState");
@@ -1218,12 +1226,41 @@ function statSums(list){
   return {depWait,depHeld,balWait,depRefund,bCost,bTax,bProfit,bQty,sCost,sTax,sQty,
           nBuy:buys.length, nSelf:selfs.length, nOrd:ords.length};
 }
+const SKEY=KEY+".statsOpen";
+function statsOpen(){
+  try{ const v=localStorage.getItem(SKEY); if(v!=null) return v==="1"; }catch(e){}
+  return window.innerWidth>700;          /* 手機預設收起，桌機預設展開 */
+}
+function toggleStats(){
+  try{ localStorage.setItem(SKEY, statsOpen()?"0":"1"); }catch(e){}
+  renderStats(filtered());
+}
 function renderStats(list){
   const f=statSums(list);
+  const box=document.getElementById("stats");
+  if(!f.nBuy && !f.nSelf){ box.innerHTML=`<div class="sgrp"><div class="sgh"><b>這個檔期還沒有商品</b></div></div>`; return; }
+  const open=statsOpen();
   const cell=(k,v,col,sub)=>`<div class="stat${sub?" sub":""}"><div class="k">${k}</div><div class="v num"${col?` style="color:${col}"`:""}>${v}</div></div>`;
+  const chev=`<button class="schev" data-stats="toggle" aria-label="${open?"收起":"展開"}統計">${open?"⌃":"⌄"}</button>`;
+
+  if(!open){
+    /* 收起時只留真正要盯的數字：還沒收的錢、這趟賺多少 */
+    const due=f.depWait+f.balWait;
+    const bits=[];
+    if(due) bits.push(`<span class="kv">待收 <b class="num" style="color:var(--shu)">${twd(due)}</b></span>`);
+    if(f.depRefund) bits.push(`<span class="kv">待退 <b class="num" style="color:var(--shu)">${twd(f.depRefund)}</b></span>`);
+    if(!due && !f.depRefund) bits.push(`<span class="kv done">款項都結清了</span>`);
+    bits.push(`<span class="kv">收益 <b class="num" style="color:${f.bProfit<0?"var(--shu)":"var(--matcha)"}">${twd(f.bProfit)}</b></span>`);
+    box.innerHTML=`<div class="sgrp buy oneline peek" data-stats="toggle">
+      <b>代購</b><span class="n">${f.nBuy} 項</span>
+      <span class="sp"></span>${bits.join("")}${chev}</div>`;
+    box.querySelectorAll("[data-stats]").forEach(e=>e.onclick=ev=>{ev.stopPropagation();toggleStats();});
+    return;
+  }
+
   const buyBlock=`
     <div class="sgrp buy">
-      <div class="sgh"><b>代購</b><span>${f.nBuy} 項 · ${f.bQty} 件 · ${f.nOrd} 位客人</span></div>
+      <div class="sgh"><b>代購</b><span>${f.nBuy} 項 · ${f.bQty} 件 · ${f.nOrd} 位客人</span><span class="sp"></span>${chev}</div>
       <div class="srow">
         ${cell("待收訂金",twd(f.depWait),"var(--amber)")}
         ${cell("已收訂金",twd(f.depHeld),"var(--matcha)")}
@@ -1242,8 +1279,8 @@ function renderStats(list){
       <span class="kv">刷卡 <b class="num">${twd(f.sCost)}</b></span>
       ${f.sTax?`<span class="kv">可退稅 <b class="num">${yen(f.sTax)}</b></span>`:""}
     </div>` : "";
-  document.getElementById("stats").innerHTML = (f.nBuy?buyBlock:"") + selfBlock
-    || `<div class="sgrp"><div class="sgh"><b>這個檔期還沒有商品</b></div></div>`;
+  box.innerHTML=(f.nBuy?buyBlock:"")+selfBlock;
+  box.querySelectorAll("[data-stats]").forEach(e=>e.onclick=ev=>{ev.stopPropagation();toggleStats();});
 }
 
 function handle(act,it){
@@ -2383,7 +2420,7 @@ function renderSettings(){
           <button class="btn primary" id="restoreTxt">從上面的文字還原</button>
         </div>
       </div>
-      <p class="hint" style="margin:12px 0 0">目前 ${S.items.length} 筆商品，約佔用 ${sizeNote()}。</p>
+      <p class="hint" style="margin:12px 0 0">目前 ${S.items.length} 筆商品，約佔用 ${sizeNote()}。　版本 <b class="num">${BUILD}</b></p>
     </section>
 
     <section class="panel">
