@@ -115,28 +115,17 @@ button{cursor:pointer}
 }
 
 /* ---------- 統計 ---------- */
-.stats{display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--rule); border-bottom:1px solid var(--rule)}
-.stat{background:var(--paper); padding:9px 12px 10px; min-width:0}
+/* 統計區：內容是「代購」「自購」兩個區塊，直向堆疊 */
+.stats{display:block; padding:2px 16px 10px; border-bottom:1px solid var(--rule)}
+.stat{min-width:0}
 .stat .v{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .stat .k{font-size:11px; color:var(--ink3); white-space:nowrap}
 .stat .v{font-size:16px; font-weight:700; line-height:1.3; letter-spacing:-.01em}
-.stat.out .v{color:var(--ink)}
-.stat.tax .v{color:var(--gold)}
-.stat.in  .v{color:var(--ink)}
-.stat.net .v{color:var(--matcha)}
-@media (max-width:700px){
-  /* 手機：可左右滑的一列，避免佔掉太多畫面 */
-  .stats{display:flex; overflow-x:auto; scrollbar-width:none; gap:1px}
-  .stats::-webkit-scrollbar{display:none}
-  .stat{flex:0 0 42%; min-width:132px}
-  .stat .v{font-size:15px}
-}
 @media (min-width:1024px){
-  /* 桌機夠寬就排成一列八格，不要拉成兩排稀疏的大格子 */
-  .stats{grid-template-columns:repeat(8,1fr)}
-  .stat{padding:8px 11px 9px}
-  .stat .k{font-size:10.5px}
-  .stat .v{font-size:14.5px; letter-spacing:-.015em}
+  /* 桌機夠寬就把代購、自購並排 */
+  .stats{display:flex; gap:12px; align-items:flex-start}
+  .sgrp{flex:1 1 0; margin:10px 0}
+  .sgrp.self{flex:0 0 260px}
 }
 
 /* ---------- 篩選 ---------- */
@@ -183,13 +172,79 @@ main{padding:14px 0 100px}
 .qtybar b{font-size:21px; font-weight:700; line-height:1}
 .qtybar span{font-size:10px; color:var(--ink3)}
 .item.self .qtybar{background:var(--rule2)}
-.item.s-deposit_wait .qtybar{background:color-mix(in srgb,var(--amber) 15%,var(--card))}
-.item.s-deposit_paid .qtybar{background:color-mix(in srgb,var(--matcha) 15%,var(--card))}
-.item.s-bought      .qtybar{background:color-mix(in srgb,var(--shu) 12%,var(--card))}
-.item.s-unavailable .qtybar{background:color-mix(in srgb,var(--shu) 18%,var(--card))}
-.item.s-settled .qtybar,.item.s-refunded .qtybar,.item.s-todo .qtybar{background:var(--rule2)}
-.item.s-deposit_wait{border-style:dashed}
-.item.s-deposit_paid{border-color:color-mix(in srgb,var(--matcha) 45%,var(--rule)); border-width:1.5px}
+.item.s-todo        .qtybar{background:color-mix(in srgb,var(--amber) 15%,var(--card))}
+.item.ready         .qtybar{background:color-mix(in srgb,var(--matcha) 15%,var(--card))}
+.item.s-bought      .qtybar{background:color-mix(in srgb,var(--matcha) 10%,var(--card))}
+.item.s-unavailable .qtybar{background:var(--rule2)}
+.item.s-todo:not(.ready){border-style:dashed}
+.item.ready{border-color:color-mix(in srgb,var(--matcha) 45%,var(--rule)); border-width:1.5px}
+
+/* ---- 統計：代購／自購分區 ---- */
+.sgrp{border:1px solid var(--rule); border-radius:11px; background:var(--card); padding:10px 12px 12px; margin:10px 0}
+.sgrp.buy{border-left:3px solid var(--shu)}
+.sgrp.self{border-left:3px solid var(--ink3)}
+.sgh{display:flex; align-items:baseline; gap:10px; margin-bottom:8px}
+.sgh b{font-size:13px; letter-spacing:.08em}
+.sgh span{font-size:11.5px; color:var(--ink3)}
+.snote{font-size:10.5px; color:var(--ink3); margin-top:7px; line-height:1.6}
+.srow{display:grid; grid-template-columns:repeat(4,1fr); gap:8px}
+.srow.sub{grid-template-columns:repeat(3,1fr); margin-top:8px; padding-top:9px; border-top:1px dashed var(--rule)}
+.srow.sub .stat .v{font-size:14.5px; color:var(--ink2)}
+.srow .stat{background:transparent; border:0; padding:0; min-width:0}
+.srow .stat .k{font-size:11px; color:var(--ink3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.srow .stat .v{font-size:16px; font-weight:600; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+@media(max-width:560px){
+  .srow{grid-template-columns:repeat(2,1fr)}
+  .srow.sub{grid-template-columns:repeat(3,1fr)}
+  .srow .stat .v{font-size:14.5px}
+  .srow.sub .stat .v{font-size:13px}
+}
+
+/* ---- 對帳：客人訂單 ---- */
+.ledger.ord.settled{opacity:.72}
+.phase{font-size:11px; padding:2px 8px; border-radius:999px; border:1px solid currentColor; white-space:nowrap}
+.phase.wait{color:var(--amber)} .phase.go{color:var(--matcha)}
+.phase.mid{color:var(--shu)} .phase.alert{color:var(--shu)} .phase.done{color:var(--ink3)}
+.paybar{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; padding:11px 0 12px; border-bottom:1px dashed var(--rule)}
+.pay{border:1px solid var(--rule); border-radius:10px; padding:9px 10px; background:var(--paper); min-width:0}
+.pay.on{border-color:color-mix(in srgb,var(--matcha) 50%,var(--rule)); background:color-mix(in srgb,var(--matcha) 7%,var(--paper))}
+.pay.quiet{background:transparent}
+.pay .k{font-size:11px; color:var(--ink3); display:flex; gap:6px; align-items:baseline}
+.pay .k .mini{font-size:10px; opacity:.8}
+.pay .v{font-size:17px; font-weight:600; margin-top:3px; font-variant-numeric:tabular-nums}
+.pay .sub{font-size:10.5px; color:var(--ink3); margin-top:3px; line-height:1.5}
+.pay > .act{margin-top:7px; width:100%; justify-content:center; display:flex}
+.pedit .act{flex:0 0 auto; width:auto; padding:4px 8px; margin:0}
+.pay .act[disabled]{opacity:.4; pointer-events:none}
+.pedit{display:flex; gap:5px; align-items:center; margin-top:3px}
+.pin{flex:1; min-width:0; width:100%; font-size:16px; font-weight:600; padding:3px 6px;
+     border:1px solid var(--rule); border-radius:7px; background:var(--card); color:var(--ink);
+     font-variant-numeric:tabular-nums}
+.pin:focus{outline:none; border-color:var(--shu)}
+@media(max-width:700px){ .paybar{grid-template-columns:repeat(2,1fr)} }
+.salebox{margin:11px 0 0; padding:11px 12px; background:var(--paper); border:1px solid var(--rule);
+  border-radius:9px; font-size:12.5px; line-height:1.85; white-space:pre-wrap; word-break:break-word; font-family:inherit}
+
+/* ---- 結帳單 ---- */
+.copanel{margin-top:18px; border-top:2px solid var(--rule2)}
+.corow{display:flex; gap:11px; align-items:center; padding:10px 0; border-bottom:1px dashed var(--rule)}
+.corow:last-child{border-bottom:0}
+.comain{flex:1; min-width:0}
+.con{font-size:13.5px; font-weight:600}
+.cosub{display:block; font-size:11px; color:var(--ink3); margin-top:2px; line-height:1.6}
+.comoney{text-align:right; white-space:nowrap}
+.comoney b{font-size:15px; font-variant-numeric:tabular-nums}
+.pickbox{max-height:300px; overflow:auto; border:1px solid var(--rule); border-radius:10px; background:var(--paper)}
+.pickrow{display:flex; gap:9px; align-items:center; padding:8px 11px; border-bottom:1px dashed var(--rule);
+  font-size:12.5px; cursor:pointer}
+.pickrow:last-child{border-bottom:0}
+.pickrow.on{background:color-mix(in srgb,var(--matcha) 9%,var(--paper))}
+.pickrow .pn{flex:1; min-width:0}
+.pickrow .pn i{display:block; font-style:normal; font-size:11px; color:var(--ink3)}
+.pickrow .pw{font-size:11px; color:var(--ink3); white-space:nowrap}
+.pickrow .pq{font-size:12px; color:var(--ink2); white-space:nowrap}
+.pickrow .pp{font-size:12px; white-space:nowrap; font-variant-numeric:tabular-nums; min-width:62px; text-align:right}
+@media(max-width:520px){ .pickrow .pw{display:none} }
 
 .body{flex:1; min-width:0; padding:11px 12px 10px}
 .head{display:flex; gap:10px; padding-right:72px}  /* 右上角狀態標籤的位置，避免壓到品名 */
@@ -317,7 +372,7 @@ table.lt td.n{text-align:right; white-space:nowrap}
 .fgrid{display:grid; gap:12px; grid-template-columns:1fr}
 @media (min-width:600px){.fgrid{grid-template-columns:1fr 1fr}}
 label.f{display:block}
-label.f .lb{display:block; font-size:12.5px; color:var(--ink2); margin-bottom:4px}
+label.f .lb,.lb{display:block; font-size:12.5px; color:var(--ink2); margin-bottom:4px}
 label.f .lb em{font-style:normal; color:var(--ink3); font-size:11.5px}
 input.i,select.i,textarea.i{
   width:100%; background:var(--paper); border:1px solid var(--rule);
@@ -426,10 +481,8 @@ textarea.i{resize:vertical; min-height:58px}
       <select id="fStore"><option value="">全部店家</option></select>
       <select id="fCat"><option value="">全部類別</option></select>
       <select id="fState"><option value="">全部狀態</option>
-        <option value="deposit_wait">待收訂金</option><option value="deposit_paid">可以買</option>
-        <option value="bought">待收尾款</option><option value="settled">已結清</option>
-        <option value="unavailable">買不到</option><option value="refunded">已退訂金</option>
-        <option value="todo">自購待買</option></select>
+        <option value="ready">可以買</option><option value="todo">等訂金</option>
+        <option value="bought">已買到</option><option value="unavailable">買不到</option></select>
       <select id="fKind"><option value="">代購＋自購</option><option value="buy">代購</option><option value="self">自購</option></select>
       <button class="chipclear hide" id="clearF">清除</button>
     </div>
@@ -445,14 +498,6 @@ textarea.i{resize:vertical; min-height:58px}
      這裡是純文字區塊，就算貼錯格式也不會讓頁面壞掉。
      =================================================================== -->
 <script type="text/plain" id="fb-config">
-const firebaseConfig = {
-  apiKey: "AIzaSyAxoWsPSPVEVO8BQHiAuXVlLk0Np4bO4fY",
-  authDomain: "daigou-6d36b.web.app",
-  projectId: "daigou-6d36b",
-  storageBucket: "daigou-6d36b.firebasestorage.app",
-  messagingSenderId: "728344633031",
-  appId: "1:728344633031:web:c78c1e746cdafbe34168e2"
-}
 </script>
 
 <div class="wrap"><div id="banner" class="hide"></div></div>
@@ -495,27 +540,22 @@ const firebaseConfig = {
         <label class="f"><span class="lb">當地單價 ¥<em>　含稅標價</em></span><input class="i num" name="price" type="number" min="0" step="1" required placeholder="1280"></label>
         <label class="f"><span class="lb">狀態</span>
           <select class="i" name="state">
-            <option value="deposit_wait">待收訂金</option>
-            <option value="deposit_paid">已收訂金 · 可以買</option>
-            <option value="bought">已購 · 待收尾款</option>
-            <option value="settled">已結清</option>
+            <option value="todo">待買</option>
+            <option value="bought">已買到</option>
             <option value="unavailable">買不到</option>
-            <option value="refunded">已退訂金</option>
-            <option value="todo">自購待買</option>
           </select>
         </label>
-        <label class="f"><span class="lb">訂金 NT$<em>　留白＝依設定比例</em></span><input class="i num" name="depOv" type="number" min="0" step="1" placeholder="自動"></label>
         <label class="f"><span class="lb">檔期</span><select class="i" name="tripId"></select></label>
         <label class="f"><span class="lb">下單日期</span><input class="i" name="orderDate" type="date"></label>
-        <label class="f"><span class="lb">代購匯率（本筆）<em>　報價後就凍結</em></span>
+        <label class="f"><span class="lb">代購匯率（本筆）<em>　跟客人報價用</em></span>
           <span style="display:flex; gap:6px">
             <input class="i num" name="rateSell" type="number" step="0.0001" style="flex:1">
             <button type="button" class="btn" id="useNow" style="flex:0 0 auto; padding:9px 11px; font-size:12.5px; white-space:nowrap">帶入今日</button>
           </span>
         </label>
         <label class="f"><span class="lb">實際匯率（本筆）<em>　你換日幣的成本</em></span><input class="i num" name="rateReal" type="number" step="0.0001"></label>
-        <label class="f"><span class="lb">實付 ¥<em>　結帳後填收據金額</em></span><input class="i num" name="paidYen" type="number" min="0" step="1" placeholder="未結帳"></label>
-        <label class="f"><span class="lb">刷卡帳單 NT$<em>　對完帳單再填</em></span><input class="i num" name="cardTwd" type="number" min="0" step="1" placeholder="未入帳"></label>
+        <label class="f"><span class="lb">實付 ¥<em>　單品收據；整張發票請用「結帳」</em></span><input class="i num" name="paidYen" type="number" min="0" step="1" placeholder="未結帳"></label>
+        <label class="f"><span class="lb">刷卡帳單 NT$<em>　單品；整張卡單請用「結帳」</em></span><input class="i num" name="cardTwd" type="number" min="0" step="1" placeholder="未入帳"></label>
         <label class="f"><span class="lb">退稅金額 ¥<em>　留白＝自動計算</em></span><input class="i num" name="taxOv" type="number" min="0" step="1" placeholder="自動"></label>
         <label class="f"><span class="lb">代購實收 NT$<em>　留白＝依代購匯率</em></span><input class="i num" name="chargeOv" type="number" min="0" step="1" placeholder="自動"></label>
       </div>
@@ -533,6 +573,34 @@ const firebaseConfig = {
   </div>
 </div>
 
+<div class="sheet" id="coSheet" aria-modal="true" role="dialog">
+  <div class="veil" data-close></div>
+  <div class="panelbox">
+    <h2 id="coTitle">新增結帳單</h2>
+    <form id="coForm">
+      <p class="hint" style="margin:0 0 12px">一張發票就是一張結帳單。勾選這張發票買了哪些商品，填上收據上的實付日幣；卡單出來之後再回來補刷卡台幣和手續費。系統會依各商品的標價比例把金額分攤回去。</p>
+      <div class="fgrid">
+        <label class="f"><span class="lb">店家</span><select class="i" name="store"></select></label>
+        <label class="f"><span class="lb">單據名稱<em>　分辨同一家的多張發票</em></span><input class="i" name="label" placeholder="例：發票1／一樓結帳"></label>
+        <label class="f"><span class="lb">結帳日期</span><input class="i" name="date" type="date"></label>
+        <label class="f"><span class="lb">實付日幣 ¥<em>　收據上的總金額</em></span><input class="i num" name="yen" type="number" min="0" step="1" placeholder="例：24800"></label>
+        <label class="f"><span class="lb">刷卡台幣 NT$<em>　卡單出來再填</em></span><input class="i num" name="twd" type="number" min="0" step="1" placeholder="未入帳"></label>
+        <label class="f"><span class="lb">刷卡手續費 NT$<em>　海外交易手續費</em></span><input class="i num" name="feeTwd" type="number" min="0" step="1" placeholder="未入帳"></label>
+      </div>
+      <div class="lb" style="margin:16px 0 6px"><b>這張發票買了哪些</b><em>　買不到的、已經被別張結帳單用掉的不會出現</em></div>
+      <div id="coPick" class="pickbox"></div>
+      <label class="f" style="margin-top:12px"><span class="lb">備註</span><textarea class="i" name="note" placeholder="例：用信用卡 A 刷，店頭免稅"></textarea></label>
+      <div class="calc" id="coCalc"></div>
+      <div class="btnrow">
+        <button type="submit" class="btn primary">儲存結帳單</button>
+        <button type="button" class="btn" data-close>取消</button>
+        <span style="flex:1"></span>
+        <button type="button" class="btn danger hide" id="coDel">刪除</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -540,17 +608,15 @@ const firebaseConfig = {
 const KEY="daigou.jp.v1";
 const DEF_SET={rateReal:0.215, rateSell:0.23, taxRate:10, base:"incl", depositPct:50,
                cardFeePct:1.5, refundMode:"store", theme:""};
+/* 商品只管「買到沒有」。錢的事（訂金、尾款）移到客人訂單那一層，
+   因為客人是整包下訂、整包付款，不是一件一件結。 */
 const ST={
-  deposit_wait:{t:"待收訂金", chip:"等訂金",   tone:"wait",  next:"deposit_paid", btn:"收到訂金了"},
-  deposit_paid:{t:"可以買",   chip:"可以買",   tone:"go",    next:"bought",       btn:"買到了"},
-  bought:      {t:"待收尾款", chip:"待收尾款", tone:"mid",   next:"settled",      btn:"尾款收到了"},
-  settled:     {t:"已結清",   chip:"已結清",   tone:"done",  next:"deposit_wait", btn:"重設"},
-  unavailable: {t:"買不到",   chip:"買不到",   tone:"alert", next:"refunded",     btn:"訂金已退"},
-  refunded:    {t:"已退訂金", chip:"已退訂金", tone:"done",  next:"deposit_wait", btn:"重新開始"},
-  todo:        {t:"待買",     chip:"自購待買", tone:"wait",  next:"bought",       btn:"買到了"}
+  todo:        {t:"待買",   chip:"待買",   tone:"wait",  btn:"買到了"},
+  bought:      {t:"已買到", chip:"已買到", tone:"go",    btn:"退回待買"},
+  unavailable: {t:"買不到", chip:"買不到", tone:"alert", btn:"改回待買"}
 };
-const FLOW_ORDER=["deposit_paid","deposit_wait","todo","bought","unavailable","settled","refunded"];
-let S={items:[], trips:[], cur:"", set:{...DEF_SET}, meta:{backupAt:0, backupCount:0}};
+const FLOW_ORDER=["todo","bought","unavailable"];
+let S={items:[], trips:[], orders:[], checkouts:[], cur:"", set:{...DEF_SET}, meta:{backupAt:0, backupCount:0}};
 let editId=null, pendingImg=null;
 
 /* ---------- 儲存 ---------- */
@@ -563,21 +629,74 @@ function load(){
       S.set={...DEF_SET,...(d.set||{})};
       S.meta={backupAt:0, backupCount:0, ...(d.meta||{})};
       S.trips=Array.isArray(d.trips)?d.trips:[];
+      S.orders=Array.isArray(d.orders)?d.orders:[];
+      S.checkouts=Array.isArray(d.checkouts)?d.checkouts:[];
       S.cur=d.cur||"";
       S.items.forEach(it=>{
-        if(it.state==="todo" && it.kind==="buy") it.state="deposit_wait";
         if(it.depOv===undefined) it.depOv=null;
         if(it.paidYen===undefined) it.paidYen=null;
         if(it.cardTwd===undefined) it.cardTwd=null;
         if(it.url===undefined) it.url="";
         if(it.rateSell===undefined) it.rateSell=S.set.rateSell;   /* 既有資料凍結在目前匯率 */
         if(it.rateReal===undefined) it.rateReal=S.set.rateReal;
-        if(it.rateLocked===undefined) it.rateLocked=!["deposit_wait","todo"].includes(it.state);
         if(it.orderDate===undefined) it.orderDate=new Date(it.ts||Date.now()).toISOString().slice(0,10);
-        if(it.depTaken===undefined) it.depTaken=["deposit_paid","bought","settled","unavailable"].includes(it.state);
       });
+      migrateOrders();
     }
   }catch(e){ console.warn("讀取失敗",e); }
+}
+
+/* ===== 舊版（錢綁在單品上）→ 新版（錢綁在客人訂單上）的一次性轉換 =====
+   舊狀態：deposit_wait / deposit_paid / bought / settled / unavailable / refunded / todo
+   新狀態：todo / bought / unavailable，訂金尾款改記在 S.orders。 */
+const OLD_STATES=["deposit_wait","deposit_paid","settled","refunded"];
+function migrateOrders(){
+  const needs=S.items.some(it=>OLD_STATES.includes(it.state)) || S.items.some(it=>it.rateLocked!==undefined);
+  if(!needs) return;
+  /* 先把客人訂單整理出來，再把商品狀態降級 */
+  const buckets={};
+  S.items.forEach(it=>{
+    if(it.kind!=="buy") return;
+    const k=(it.tripId||"")+"\u0001"+(it.customer||"");
+    (buckets[k]=buckets[k]||[]).push(it);
+  });
+  Object.keys(buckets).forEach(k=>{
+    const arr=buckets[k], it0=arr[0];
+    if(findOrder(it0.tripId,it0.customer||"")) return;      /* 已經轉過就不重複 */
+    let depAmt=0, anyDep=false, allSettled=true, liveN=0, anyRefunded=false;
+    arr.forEach(it=>{
+      const took=it.depTaken||["deposit_paid","bought","settled","unavailable"].includes(it.state);
+      if(took){ anyDep=true; depAmt += oldDeposit(it); }
+      if(it.state==="refunded") { anyRefunded=true; return; }
+      liveN++;
+      if(it.state!=="settled") allSettled=false;
+    });
+    const o={
+      id:newId("o"), tripId:it0.tripId||"", customer:it0.customer||"",
+      depAmt: anyDep?Math.round(depAmt):null, depPaid:anyDep, depPaidAt: anyDep?(it0.orderDate||""):"",
+      balPaid: !!(liveN && allSettled), balPaidAt:"", balAmt:null,
+      refunded: anyRefunded && !anyDep, note:""
+    };
+    S.orders.push(o);
+  });
+  /* 商品狀態降級 */
+  S.items.forEach(it=>{
+    if(["deposit_wait","deposit_paid"].includes(it.state)) it.state="todo";
+    else if(["settled"].includes(it.state)) it.state="bought";
+    else if(["refunded"].includes(it.state)) it.state="unavailable";
+    delete it.rateLocked; delete it.depTaken;
+  });
+  persist();
+}
+/* 舊版單品訂金的算法，只在轉換時用一次 */
+function oldDeposit(it){
+  const qty=Math.max(1,+it.qty||1), sub=(+it.price||0)*qty;
+  const r=(+S.set.taxRate||0)/100;
+  const tax=(it.taxOv===""||it.taxOv==null)?(r>0?sub/(1+r)*r:0):+it.taxOv;
+  const base=S.set.base==="excl"?(sub-tax):sub;
+  const rs=(it.rateSell!=null&&it.rateSell!=="")?+it.rateSell:(+S.set.rateSell||0);
+  const charge=(it.chargeOv===""||it.chargeOv==null)?base*rs:+it.chargeOv;
+  return (it.depOv===""||it.depOv==null) ? charge*((+S.set.depositPct||0)/100) : +it.depOv;
 }
 /* 只寫入本機，不更動備份提醒狀態（雲端同步下來時用） */
 function persist(){
@@ -684,30 +803,102 @@ const defRR=()=>{const t=curTrip(); return (t&&t.rateReal!=null&&t.rateReal!==""
 const today=()=>new Date().toISOString().slice(0,10);
 const yen=n=>"¥"+Math.round(n).toLocaleString("ja-JP");
 const twd=n=>"NT$"+Math.round(n).toLocaleString("zh-Hant-TW");
+/* ===== 客人訂單：訂金、尾款都記在這一層 ===== */
+function findOrder(tripId,customer){
+  return S.orders.find(o=>(o.tripId||"")===(tripId||"") && (o.customer||"")===(customer||"")) || null;
+}
+function getOrder(tripId,customer){
+  let o=findOrder(tripId,customer);
+  if(!o){
+    o={id:newId("o"), tripId:tripId||"", customer:customer||"", depAmt:null,
+       depPaid:false, depPaidAt:"", balPaid:false, balPaidAt:"", refunded:false, note:""};
+    S.orders.push(o);
+  }
+  return o;
+}
+const orderOf = it => it.kind==="buy" ? findOrder(it.tripId,it.customer||"") : null;
+function orderItems(o){
+  return S.items.filter(i=>i.kind==="buy" && (i.tripId||"")===(o.tripId||"") && (i.customer||"")===(o.customer||""));
+}
+/* 代購要收到訂金才開始買；自購隨時可買 */
+const depOk = it => it.kind==="self" || (()=>{const o=orderOf(it); return !!(o&&o.depPaid);})();
+const canBuy = it => it.state==="todo" && depOk(it);
+
+function orderSum(o){
+  const arr=orderItems(o);
+  let charge=0, chargeGot=0, chargeMiss=0, cost=0, tax=0, qty=0;
+  let nBought=0, nTodo=0, nMiss=0;
+  arr.forEach(it=>{
+    const m=calc(it); qty+=m.qty;
+    if(it.state==="unavailable"){ chargeMiss+=m.charge; nMiss++; return; }
+    charge+=m.charge;                                 /* 報價總額：含還沒買的 */
+    if(it.state==="bought"){                          /* 真的花出去的錢只算買到的 */
+      nBought++; chargeGot+=m.charge; cost+=m.cost; tax+=m.tax;
+    } else nTodo++;
+  });
+  const depAuto = charge*((+S.set.depositPct||0)/100);
+  const deposit = (o.depAmt==null||o.depAmt==="") ? depAuto : +o.depAmt;
+  const ready = arr.length>0 && nTodo===0;            /* 這包全部有結果了，可以開賣貨便 */
+  /* 尾款以「實際買到的」結算，買不到的那幾項不跟客人收 */
+  const net = chargeGot - (o.depPaid?deposit:0);
+  const depWait   = o.depPaid?0:deposit;
+  const depHeld   = (o.depPaid && !o.balPaid)?deposit:0;
+  const balDue    = (o.balPaid||!ready)?0:Math.max(0,net);
+  const refundDue = (o.balPaid||!ready)?0:Math.max(0,-net);
+  let phase;
+  if(o.balPaid) phase="已結清";
+  else if(arr.length && nMiss===arr.length) phase=(o.depPaid&&deposit>0)?"待退訂金":"全部買不到";
+  else if(!o.depPaid) phase="待收訂金";
+  else if(nTodo>0) phase="採購中";
+  else phase="待收尾款";
+  return {arr, n:arr.length, qty, charge, chargeGot, chargeMiss, cost, tax, profit:chargeGot-cost,
+          depAuto, deposit, net, depWait, depHeld, balDue, refundDue,
+          nBought, nTodo, nMiss, ready, phase};
+}
+
+/* ===== 店家結帳單：一張發票分攤到它涵蓋的商品 ===== */
+function checkoutOf(it){
+  return S.checkouts.find(c=>Array.isArray(c.itemIds)&&c.itemIds.includes(it.id))||null;
+}
+function allocFor(it){
+  const co=checkoutOf(it); if(!co) return null;
+  const members=S.items.filter(x=>co.itemIds.includes(x.id));
+  const wt=x=>(+x.price||0)*Math.max(1,+x.qty||1);
+  const W=members.reduce((a,x)=>a+wt(x),0);
+  const share = W>0 ? wt(it)/W : (members.length?1/members.length:0);
+  const yen = (co.yen===""||co.yen==null) ? null : +co.yen*share;
+  const tt  = (co.twd===""||co.twd==null) ? null : (+co.twd + (+co.feeTwd||0));
+  return {co, share, yen, twd: tt==null?null:tt*share};
+}
+
+/* ===== 單品計算 =====
+   成本來源由準到粗：單品刷卡台幣 → 結帳單分攤 → 單品實付日幣 → 標價推估 */
 function calc(it){
   const qty=Math.max(1,+it.qty||1), price=+it.price||0;
   const sub=price*qty;
   const r=(+S.set.taxRate||0)/100;
   const autoTax = r>0 ? sub/(1+r)*r : 0;
   const tax = (it.taxOv===""||it.taxOv==null) ? autoTax : +it.taxOv;
-  /* 日圓實際支出：有填實付就用實付，店頭免稅＝已折抵、機場退稅＝再扣回退稅 */
-  const paid = (it.paidYen===""||it.paidYen==null) ? null : +it.paidYen;
+  const al = allocFor(it);
+  const manualCard = (it.cardTwd===""||it.cardTwd==null) ? null : +it.cardTwd;
+  const manualYen  = (it.paidYen===""||it.paidYen==null) ? null : +it.paidYen;
+  const paid = manualYen!=null ? manualYen : (al && al.yen!=null ? al.yen : null);
   const yenOut = paid!=null
     ? (S.set.refundMode==="airport" ? Math.max(0, paid - paid/(1+r)*r) : paid)
     : (sub - tax);
   const fee = 1 + (+S.set.cardFeePct||0)/100;
   const costEst = yenOut*RR(it)*fee;
-  const card = (it.cardTwd===""||it.cardTwd==null) ? null : +it.cardTwd;
-  const cost = card!=null ? card : costEst;
+  let cost=costEst, src="est";
+  if(manualCard!=null){ cost=manualCard; src="card"; }
+  else if(al && al.twd!=null){ cost=al.twd; src="checkout"; }
+  else if(paid!=null){ src="paid"; }
   const base = S.set.base==="excl" ? (sub-tax) : sub;
   const autoCharge = base*RS(it);
   const charge = it.kind==="self" ? 0
     : ((it.chargeOv===""||it.chargeOv==null) ? autoCharge : +it.chargeOv);
-  const dp=(+S.set.depositPct||0)/100;
-  const deposit = it.kind==="self" ? 0 : ((it.depOv===""||it.depOv==null) ? charge*dp : +it.depOv);
-  return {qty, sub, tax, paid, yenOut, costEst, cost, isActual: card!=null,
-          charge, deposit, balance:Math.max(0,charge-deposit),
-          profit: it.kind==="self" ? 0 : charge-cost};
+  return {qty, sub, tax, paid, yenOut, costEst, cost, src,
+          isActual: src==="card"||src==="checkout",
+          charge, profit: it.kind==="self" ? 0 : charge-cost};
 }
 
 /* ---------- 篩選 ---------- */
@@ -722,7 +913,11 @@ function filtered(){
     if(c && (it.customer||"")!==c) return false;
     if(st && (it.store||"")!==st) return false;
     if(ca && (it.category||"")!==ca) return false;
-    if(se && it.state!==se) return false;
+    if(se){
+      if(se==="ready"){ if(!canBuy(it)) return false; }
+      else if(se==="todo"){ if(it.state!=="todo"||canBuy(it)) return false; }
+      else if(it.state!==se) return false;
+    }
     if(ki && it.kind!==ki) return false;
     if(q){
       const hay=[it.nameZh,it.nameJa,it.spec,it.note,it.store,it.customer,it.category].join(" ").toLowerCase();
@@ -733,7 +928,9 @@ function filtered(){
 }
 
 /* ---------- 繪製 ---------- */
-const ORDER={deposit_paid:0, deposit_wait:1, todo:2, bought:3, unavailable:4, settled:5, refunded:6};
+const ORDER={todo:0, bought:1, unavailable:2};
+/* 清單排序：可以買的排最前面，其次待買（等訂金），再來已買到、買不到 */
+const sortKey=it=>canBuy(it)?0:(it.state==="todo"?1:(it.state==="bought"?2:3));
 
 function renderTripBar(){
   const sel=document.getElementById("tripSel"); if(!sel) return;
@@ -751,11 +948,11 @@ function renderTripBar(){
 function render(){
   migrateTrips(); renderTripBar();
   syncSelects();
-  const list=filtered().slice().sort((a,b)=>(ORDER[a.state]-ORDER[b.state])||(b.ts-a.ts));
+  const list=filtered().slice().sort((a,b)=>(sortKey(a)-sortKey(b))||(b.ts-a.ts));
   renderStats(list);
-  const canBuy=S.items.filter(i=>i.state==="deposit_paid"||i.state==="todo").length;
+  const nReady=S.items.filter(i=>(S.cur==="all"||i.tripId===S.cur)&&canBuy(i)).length;
   const pill=document.getElementById("todoPill");
-  pill.textContent=canBuy; pill.classList.toggle("hide",canBuy===0);
+  pill.textContent=nReady; pill.classList.toggle("hide",nReady===0);
   renderFlowChips();
 
   const g=document.getElementById("grid");
@@ -774,35 +971,34 @@ function render(){
   g.appendChild(frag);
 }
 
+const SRC_LAB={card:"刷卡帳單（單品）", checkout:"刷卡帳單（結帳單分攤）", paid:"依實付日幣換算", est:"依標價推估"};
 function cardOf(it){
   const m=calc(it);
+  const o=orderOf(it);
   const el=document.createElement("article");
-  const st=ST[it.state]||ST.deposit_wait;
-  const dim=["settled","refunded"].includes(it.state)||(it.kind==="self"&&it.state==="bought");
-  el.className="item "+(it.kind==="self"?"self":"buy")+" s-"+it.state+(dim?" done":"");
-  const stamp = '<span class="stamp '+st.tone+'">'+st.t+'</span>';
+  const st=ST[it.state]||ST.todo;
+  const ready=canBuy(it);
+  const dim=it.state==="unavailable"||(it.kind==="self"&&it.state==="bought")||(o&&o.balPaid);
+  el.className="item "+(it.kind==="self"?"self":"buy")+" s-"+it.state+(ready?" ready":"")+(dim?" done":"");
+  const stampTxt = it.state==="todo" ? (ready?"可以買":"等訂金") : st.t;
+  const stampTone = it.state==="todo" ? (ready?"go":"wait") : st.tone;
+  const stamp = '<span class="stamp '+stampTone+'">'+stampTxt+'</span>';
   const img = it.img ? `<img class="thumb" src="${it.img}" alt="">` : `<div class="noimg">無圖</div>`;
-  const depLab = it.state==="deposit_wait" ? "訂金（待收）"
-               : it.state==="unavailable" ? "訂金（待退）"
-               : it.state==="refunded" ? "訂金（已退）" : "訂金（已收）";
-  const balLab = it.state==="settled" ? "尾款（已收）" : "尾款（待收）";
   const paidRow = m.paid!=null
-    ? `<div class="row paid"><span class="lab">實付（刷卡）</span><i class="dots"></i><span class="val num">${yen(m.paid)}</span></div>` : "";
-  const costLab = m.isActual ? "刷卡帳單（實際）" : "我的成本（預估）";
+    ? `<div class="row paid"><span class="lab">實付日幣${m.src==="checkout"?"（分攤）":""}</span><i class="dots"></i><span class="val num">${yen(m.paid)}</span></div>` : "";
+  const costLab = SRC_LAB[m.src]||"我的成本";
   const money = it.kind==="self"
     ? `<div class="row"><span class="lab">標價小計</span><i class="dots"></i><span class="val num">${yen(m.sub)}</span></div>
-       <div class="row tax"><span class="lab">預估退稅</span><i class="dots"></i><span class="val num">−${yen(m.tax)}</span></div>
+       <div class="row tax"><span class="lab">可退稅</span><i class="dots"></i><span class="val num">−${yen(m.tax)}</span></div>
        ${paidRow}
-       <div class="row total"><span class="lab">${costLab.replace("我的成本","自付成本")}</span><i class="dots"></i><span class="val num" style="color:var(--ink)">${twd(m.cost)}</span></div>`
+       <div class="row total ${m.isActual?"actual":""}"><span class="lab">自付成本 · ${costLab}</span><i class="dots"></i><span class="val num" style="color:var(--ink)">${twd(m.cost)}</span></div>`
     : `<div class="row"><span class="lab">標價小計</span><i class="dots"></i><span class="val num">${yen(m.sub)}</span></div>
-       <div class="row tax"><span class="lab">預估退稅</span><i class="dots"></i><span class="val num">−${yen(m.tax)}</span></div>
+       <div class="row tax"><span class="lab">可退稅</span><i class="dots"></i><span class="val num">−${yen(m.tax)}</span></div>
        ${paidRow}
        <div class="row ${m.isActual?"actual":""}"><span class="lab">${costLab}</span><i class="dots"></i><span class="val num">${twd(m.cost)}</span></div>
        <div class="row"><span class="lab">跟客人收</span><i class="dots"></i><span class="val num">${twd(m.charge)}</span></div>
-       <div class="row dep"><span class="lab">${depLab}</span><i class="dots"></i><span class="val num">${twd(m.deposit)}</span></div>
-       <div class="row bal"><span class="lab">${balLab}</span><i class="dots"></i><span class="val num">${twd(m.balance)}</span></div>
        <div class="row total ${m.profit<0?"loss":""}"><span class="lab">賺</span><i class="dots"></i><span class="val num">${m.profit<0?"−":"+"}${twd(Math.abs(m.profit))}</span></div>
-       <div class="rate ${RS(it)!==(+S.set.rateSell)?"diff":""}" title="本筆匯率 ${RS(it)}／今日 ${S.set.rateSell}">${it.rateLocked?"🔒":""}匯率 ${RS(it)}　·　${it.orderDate||"—"}${RS(it)!==(+S.set.rateSell)?`　·　今日 ${S.set.rateSell}`:""}</div>`;
+       <div class="rate ${RS(it)!==(+S.set.rateSell)?"diff":""}" title="本筆匯率 ${RS(it)}／今日 ${S.set.rateSell}">匯率 ${RS(it)}　·　${it.orderDate||"—"}${RS(it)!==(+S.set.rateSell)?`　·　今日 ${S.set.rateSell}`:""}</div>`;
 
   el.innerHTML=`
     ${stamp}
@@ -822,17 +1018,18 @@ function cardOf(it){
         ${it.store?`<span class="tag store">${esc(it.store)}</span>`:""}
         ${S.cur==="all"?`<span class="tag trip">${esc(tripName(it.tripId))}</span>`:""}
         ${it.category?`<span class="tag">${esc(it.category)}</span>`:""}
-        ${it.state==="deposit_wait"?`<span class="tag" style="border-color:var(--amber);color:var(--amber)">訂金未收 · 先別買</span>`:""}
-        ${m.isActual?`<span class="tag" style="border-color:var(--matcha);color:var(--matcha)">帳單已對</span>`:""}
+        ${(it.kind==="buy"&&it.state==="todo"&&!ready)?`<span class="tag" style="border-color:var(--amber);color:var(--amber)">訂金未收 · 先別買</span>`:""}
+        ${(o&&o.balPaid)?`<span class="tag" style="border-color:var(--ink3);color:var(--ink3)">這包已結清</span>`:""}
+        ${m.src==="checkout"?`<span class="tag" style="border-color:var(--matcha);color:var(--matcha)">結帳單 ${esc(allocFor(it).co.label||allocFor(it).co.store)}</span>`:""}
       </div>
       ${it.note?`<div class="spec" style="margin-top:4px">${esc(it.note)}</div>`:""}
       <div class="money">${money}</div>
       <div class="acts">
         <button class="act state" data-act="cycle">${st.btn}</button>
-        ${["deposit_wait","deposit_paid"].includes(it.state)?`<button class="act warn" data-act="miss">買不到</button>`:""}
-        ${it.state==="bought"?`<button class="act warn" data-act="back">退回可以買</button>`:""}
+        ${it.state==="todo"?`<button class="act warn" data-act="miss">買不到</button>`:""}
         <button class="act go" data-act="mapItem">${it.url?"商品頁":"查商品"}</button>
         ${it.store?`<button class="act go" data-act="mapStore">找 ${esc(it.store)}</button>`:""}
+        <button class="act" data-act="dup">複製這筆</button>
         <button class="act" data-act="edit">編輯</button>
         <button class="act del" data-act="del">刪除</button>
       </div>
@@ -845,12 +1042,16 @@ function cardOf(it){
 
 function renderFlowChips(){
   const box=document.getElementById("flowChips");
-  const cur=document.getElementById("fState").value, counts={};
-  S.items.forEach(it=>{counts[it.state]=(counts[it.state]||0)+1;});
-  const chips=FLOW_ORDER.filter(k=>counts[k]).map(k=>{
-    const d=ST[k];
-    return '<button class="fchip '+d.tone+'" data-state="'+k+'" data-on="'+(cur===k?1:0)+'">'+d.chip+'<b>'+counts[k]+'</b></button>';
+  const cur=document.getElementById("fState").value;
+  const live=S.items.filter(it=>S.cur==="all"||it.tripId===S.cur);
+  const counts={ready:0, todo:0, bought:0, unavailable:0};
+  live.forEach(it=>{
+    if(it.state==="todo") counts[canBuy(it)?"ready":"todo"]++;
+    else counts[it.state]=(counts[it.state]||0)+1;
   });
+  const DEF=[["ready","可以買","go"],["todo","等訂金","wait"],["bought","已買到","mid"],["unavailable","買不到","alert"]];
+  const chips=DEF.filter(([k])=>counts[k]).map(([k,lab,tone])=>
+    '<button class="fchip '+tone+'" data-state="'+k+'" data-on="'+(cur===k?1:0)+'">'+lab+'<b>'+counts[k]+'</b></button>');
   box.innerHTML=chips.join("");
   box.classList.toggle("hide",!chips.length);
   box.querySelectorAll("[data-state]").forEach(b=>{
@@ -862,49 +1063,76 @@ function renderFlowChips(){
   });
 }
 
-function flowSums(list){
-  let depWait=0, depHeld=0, balWait=0, depRefund=0;
-  list.forEach(it=>{
-    if(it.kind!=="buy") return;
-    const m=calc(it);
-    if(it.state==="deposit_wait") depWait+=m.deposit;
-    if(["deposit_paid","bought","unavailable"].includes(it.state)) depHeld+=m.deposit;
-    if(it.state==="bought") balWait+=m.balance;
-    if(it.state==="unavailable") depRefund+=m.deposit;
+/* 統計分成「代購」和「自購」兩塊，彼此的錢不相加。
+   上排＝還沒做完的事，下排＝這個檔期的結果。 */
+function statSums(list){
+  const ids=new Set(list.map(i=>i.id));
+  const buys=list.filter(i=>i.kind==="buy"), selfs=list.filter(i=>i.kind==="self");
+  /* 代購：金流看訂單，但只算清單裡有出現的訂單 */
+  const seen=new Set(); const ords=[];
+  buys.forEach(it=>{
+    const o=orderOf(it); if(!o||seen.has(o.id)) return;
+    seen.add(o.id); ords.push(o);
   });
-  return {depWait, depHeld, balWait, depRefund};
+  let depWait=0, depHeld=0, balWait=0, depRefund=0, bCost=0, bTax=0, bProfit=0;
+  ords.forEach(o=>{
+    const u=orderSum(o);
+    depWait+=u.depWait; depHeld+=u.depHeld; balWait+=u.balDue; depRefund+=u.refundDue;
+    bCost+=u.cost; bTax+=u.tax; bProfit+=u.profit;
+  });
+  let bQty=0; buys.forEach(it=>{ bQty+=Math.max(1,+it.qty||1); });
+  let sCost=0,sTax=0,sQty=0;
+  selfs.forEach(it=>{ const m=calc(it); sQty+=m.qty; if(it.state!=="bought") return; sCost+=m.cost; sTax+=m.tax; });
+  return {depWait,depHeld,balWait,depRefund,bCost,bTax,bProfit,bQty,sCost,sTax,sQty,
+          nBuy:buys.length, nSelf:selfs.length, nOrd:ords.length};
 }
 function renderStats(list){
-  let cost=0,tax=0,profit=0;
-  list.forEach(it=>{const m=calc(it); cost+=m.cost; tax+=m.tax; if(it.state!=="refunded") profit+=m.profit;});
-  const f=flowSums(list);
-  document.getElementById("stats").innerHTML=`
-    <div class="stat"><div class="k">待收訂金</div><div class="v num" style="color:var(--amber)">${twd(f.depWait)}</div></div>
-    <div class="stat"><div class="k">手上訂金</div><div class="v num" style="color:var(--matcha)">${twd(f.depHeld)}</div></div>
-    <div class="stat"><div class="k">待收尾款</div><div class="v num" style="color:var(--shu)">${twd(f.balWait)}</div></div>
-    <div class="stat net"><div class="k">預估賺</div><div class="v num">${twd(profit)}</div></div>
-    <div class="stat"><div class="k">先墊的錢</div><div class="v num">${twd(cost)}</div></div>
-    <div class="stat tax"><div class="k">可退稅</div><div class="v num">${yen(tax)}</div></div>
-    <div class="stat"><div class="k">待退訂金</div><div class="v num" style="color:${f.depRefund?'var(--shu)':'var(--ink3)'}">${twd(f.depRefund)}</div></div>
-    <div class="stat"><div class="k">項目數</div><div class="v num">${list.length}</div></div>`;
+  const f=statSums(list);
+  const cell=(k,v,col)=>`<div class="stat"><div class="k">${k}</div><div class="v num"${col?` style="color:${col}"`:""}>${v}</div></div>`;
+  const buyBlock=`
+    <div class="sgrp buy">
+      <div class="sgh"><b>代購</b><span>${f.nBuy} 項 · ${f.bQty} 件 · ${f.nOrd} 位客人</span></div>
+      <div class="srow">
+        ${cell("待收訂金",twd(f.depWait),"var(--amber)")}
+        ${cell("已收訂金",twd(f.depHeld),"var(--matcha)")}
+        ${cell("待收尾款",twd(f.balWait),"var(--shu)")}
+        ${cell("待退訂金",twd(f.depRefund),f.depRefund?"var(--shu)":"var(--ink3)")}
+      </div>
+      <div class="srow sub">
+        ${cell("刷卡金額",twd(f.bCost))}
+        ${cell("預估收益",twd(f.bProfit),f.bProfit<0?"var(--shu)":"var(--matcha)")}
+        ${cell("可退稅金額",yen(f.bTax))}
+      </div>
+      <div class="snote">刷卡金額、預估收益、可退稅只計算<b>已買到</b>的商品</div>
+    </div>`;
+  const selfBlock = f.nSelf ? `
+    <div class="sgrp self">
+      <div class="sgh"><b>自購</b><span>${f.nSelf} 項 · ${f.sQty} 件</span></div>
+      <div class="srow sub">
+        ${cell("刷卡金額",twd(f.sCost))}
+        ${cell("可退稅金額",yen(f.sTax))}
+      </div>
+    </div>` : "";
+  document.getElementById("stats").innerHTML = (f.nBuy?buyBlock:"") + selfBlock
+    || `<div class="sgrp"><div class="sgh"><b>這個檔期還沒有商品</b></div></div>`;
 }
 
 function handle(act,it){
   if(act==="cycle"){
-    const st=ST[it.state]||ST.deposit_wait;
-    if(it.kind==="self"){ it.state = it.state==="bought" ? "todo" : "bought"; }
-    else { it.state=st.next; }
-    it.depTaken=["deposit_paid","bought","settled","unavailable"].includes(it.state);
-    if(!["deposit_wait","todo"].includes(it.state)) it.rateLocked=true;
-    save(); cloudPut(it); render(); toast("已改為「"+ST[it.state].t+"」"+(it.state==="deposit_paid"?"，匯率已鎖定":""));
+    if(it.state==="todo"){
+      if(it.kind==="buy" && !depOk(it) && !confirm("這位客人的訂金還沒收到，確定已經買了嗎？")) return;
+      it.state="bought";
+    }
+    else it.state="todo";
+    save(); cloudPut(it); render(); toast("已改為「"+ST[it.state].t+"」");
   }
   if(act==="miss"){
-    const had = it.depTaken || it.state==="deposit_paid";
-    it.state = had ? "unavailable" : "refunded";
+    it.state="unavailable";
     save(); cloudPut(it); render();
-    toast(had ? "已標為買不到，記得退訂金" : "已標為買不到（訂金尚未收）");
+    const o=orderOf(it);
+    toast(o&&o.depPaid ? "已標為買不到，請到對帳頁確認退款金額" : "已標為買不到");
   }
-  if(act==="back"){ it.state="deposit_paid"; save(); cloudPut(it); render(); toast("已退回「可以買」"); }
+  if(act==="dup"){ dupItem(it); return; }
   if(act==="del"){
     if(confirm(`刪除「${it.nameZh||"這筆"}」？`)){
       S.items=S.items.filter(x=>x.id!==it.id); save(); cloudDel(it.id); render(); toast("已刪除");
@@ -962,7 +1190,6 @@ function openSheet(it){
     }
     form.elements.taxOv.value = (it.taxOv===""||it.taxOv==null)?"":it.taxOv;
     form.elements.chargeOv.value = (it.chargeOv===""||it.chargeOv==null)?"":it.chargeOv;
-    form.elements.depOv.value = (it.depOv===""||it.depOv==null)?"":it.depOv;
     form.elements.paidYen.value = (it.paidYen===""||it.paidYen==null)?"":it.paidYen;
     form.elements.cardTwd.value = (it.cardTwd===""||it.cardTwd==null)?"":it.cardTwd;
     form.elements.rateSell.value = it.rateSell ?? S.set.rateSell;
@@ -970,7 +1197,7 @@ function openSheet(it){
     form.elements.tripId.value = it.tripId || (S.trips[0]&&S.trips[0].id) || "";
     form.elements.orderDate.value = it.orderDate || today();
   }else{
-    form.elements.qty.value=1; form.elements.kind.value="buy"; form.elements.state.value="deposit_wait";
+    form.elements.qty.value=1; form.elements.kind.value="buy"; form.elements.state.value="todo";
     form.elements.rateSell.value=defRS(); form.elements.rateReal.value=defRR();
     form.elements.orderDate.value=today();
   }
@@ -1012,20 +1239,14 @@ document.getElementById("img").onchange=e=>{
 
 form.addEventListener("input",()=>{syncKind();updateCalc();});
 function syncKind(){
-  const self = form.elements.kind.value==="self", sel=form.elements.state;
-  form.elements.customer.disabled=self; form.elements.depOv.disabled=self; form.elements.chargeOv.disabled=self;
-  [...sel.options].forEach(o=>{
-    o.hidden = self ? !["todo","bought"].includes(o.value) : o.value==="todo";
-  });
-  if(self && !["todo","bought"].includes(sel.value)) sel.value="todo";
-  if(!self && sel.value==="todo") sel.value="deposit_wait";
+  const self = form.elements.kind.value==="self";
+  form.elements.customer.disabled=self; form.elements.chargeOv.disabled=self;
 }
 function updateCalc(){
   const t={
     qty:form.elements.qty.value, price:form.elements.price.value, kind:form.elements.kind.value,
     taxOv:form.elements.taxOv.value===""?null:form.elements.taxOv.value,
     chargeOv:form.elements.chargeOv.value===""?null:form.elements.chargeOv.value,
-    depOv:form.elements.depOv.value===""?null:form.elements.depOv.value,
     paidYen:form.elements.paidYen.value===""?null:form.elements.paidYen.value,
     cardTwd:form.elements.cardTwd.value===""?null:form.elements.cardTwd.value,
     rateSell:form.elements.rateSell.value===""?null:form.elements.rateSell.value,
@@ -1033,21 +1254,20 @@ function updateCalc(){
   };
   const m=calc(t);
   const pRow = m.paid!=null
-    ? `<div class="row paid"><span class="lab">實付（刷卡）</span><i class="dots"></i><span class="val num">${yen(m.paid)}</span></div>` : "";
+    ? `<div class="row paid"><span class="lab">實付日幣</span><i class="dots"></i><span class="val num">${yen(m.paid)}</span></div>` : "";
   const cLab = m.isActual ? "刷卡帳單（實際）" : "我的成本（預估，含 "+S.set.cardFeePct+"% 手續費）";
   document.getElementById("calcBox").innerHTML = t.kind==="self"
     ? `<div class="row"><span class="lab">標價小計</span><i class="dots"></i><span class="val num">${yen(m.sub)}</span></div>
-       <div class="row tax"><span class="lab">預估退稅</span><i class="dots"></i><span class="val num">−${yen(m.tax)}</span></div>
+       <div class="row tax"><span class="lab">可退稅</span><i class="dots"></i><span class="val num">−${yen(m.tax)}</span></div>
        ${pRow}
        <div class="row total"><span class="lab">自付成本</span><i class="dots"></i><span class="val num" style="color:var(--ink)">${twd(m.cost)}</span></div>`
     : `<div class="row"><span class="lab">標價小計</span><i class="dots"></i><span class="val num">${yen(m.sub)}</span></div>
-       <div class="row tax"><span class="lab">預估退稅</span><i class="dots"></i><span class="val num">−${yen(m.tax)}</span></div>
+       <div class="row tax"><span class="lab">可退稅</span><i class="dots"></i><span class="val num">−${yen(m.tax)}</span></div>
        ${pRow}
        <div class="row ${m.isActual?"actual":""}"><span class="lab">${cLab}</span><i class="dots"></i><span class="val num">${twd(m.cost)}</span></div>
        <div class="row"><span class="lab">跟客人收</span><i class="dots"></i><span class="val num">${twd(m.charge)}</span></div>
-       <div class="row dep"><span class="lab">訂金（${S.set.depositPct}%）</span><i class="dots"></i><span class="val num">${twd(m.deposit)}</span></div>
-       <div class="row bal"><span class="lab">尾款</span><i class="dots"></i><span class="val num">${twd(m.balance)}</span></div>
-       <div class="row total ${m.profit<0?"loss":""}"><span class="lab">賺</span><i class="dots"></i><span class="val num">${m.profit<0?"−":"+"}${twd(Math.abs(m.profit))}</span></div>`;
+       <div class="row total ${m.profit<0?"loss":""}"><span class="lab">賺</span><i class="dots"></i><span class="val num">${m.profit<0?"−":"+"}${twd(Math.abs(m.profit))}</span></div>
+       <div class="row dep"><span class="lab">訂金／尾款</span><i class="dots"></i><span class="val" style="font-size:11.5px;color:var(--ink3)">整包訂單一起算，在「對帳」頁登記</span></div>`;
 }
 
 form.onsubmit=e=>{
@@ -1056,11 +1276,11 @@ form.onsubmit=e=>{
   /* 自購時客人／訂金／實收是 disabled，不會出現在 FormData，統一補空字串 */
   ["nameZh","nameJa","spec","url","qty","kind","customer","store","category",
    "price","state","note","orderDate","rateSell","rateReal","tripId",
-   "taxOv","chargeOv","depOv","paidYen","cardTwd"].forEach(k=>{ if(d[k]===undefined) d[k]=""; });
+   "taxOv","chargeOv","paidYen","cardTwd"].forEach(k=>{ if(d[k]===undefined) d[k]=""; });
   if(editId){
-    const old=S.items.find(x=>x.id===editId);
-    if(old && old.rateLocked && +d.rateSell!==+old.rateSell){
-      if(!confirm("這筆已經收過訂金，匯率原本是 "+old.rateSell+"。\n改成 "+d.rateSell+" 會讓已收的訂金對不上，確定要改嗎？")) return;
+    const old=S.items.find(x=>x.id===editId), oo=old?orderOf(old):null;
+    if(oo && oo.depPaid && +d.rateSell!==+old.rateSell){
+      if(!confirm("「"+(old.customer||"這位客人")+"」的訂金已經收了，這筆匯率原本是 "+old.rateSell+"。\n改成 "+d.rateSell+" 會讓已收的訂金對不上，確定要改嗎？")) return;
     }
   }
   const rec={
@@ -1070,22 +1290,21 @@ form.onsubmit=e=>{
     spec:String(d.spec).trim(), url:String(d.url).trim(),
     qty:Math.max(1,+d.qty||1), kind:d.kind||"buy", customer:String(d.customer).trim(),
     store:String(d.store).trim(), category:String(d.category).trim(),
-    price:+d.price||0, state:d.state||"deposit_wait", note:String(d.note).trim(),
+    price:+d.price||0, state:d.state||"todo", note:String(d.note).trim(),
     taxOv: d.taxOv===""?null:+d.taxOv,
     chargeOv: d.chargeOv===""?null:+d.chargeOv,
-    depOv: d.depOv===""?null:+d.depOv,
     paidYen: d.paidYen===""?null:+d.paidYen,
     cardTwd: d.cardTwd===""?null:+d.cardTwd,
     rateSell: d.rateSell===""?S.set.rateSell:+d.rateSell,
     rateReal: d.rateReal===""?S.set.rateReal:+d.rateReal,
     tripId: d.tripId || S.cur!=="all" && S.cur || (S.trips[0]&&S.trips[0].id) || "",
     orderDate: d.orderDate||today(),
-    rateLocked: !["deposit_wait","todo"].includes(d.state),
-    depTaken: ["deposit_paid","bought","settled","unavailable"].includes(d.state),
     img: pendingImg
   };
   if(editId){ S.items=S.items.map(x=>x.id===editId?rec:x); }
   else{ S.items.unshift(rec); }
+  /* 代購一定要有一張客人訂單掛著，訂金尾款才有地方記 */
+  if(rec.kind==="buy"){ const o=getOrder(rec.tripId,rec.customer); cloudPutOrder(o); }
   save(); cloudPut(rec); closeSheet(); render(); toast(editId?"已更新":"已新增");
 };
 document.getElementById("delBtn").onclick=()=>{
@@ -1099,92 +1318,197 @@ document.getElementById("addBtn").onclick=()=>{
   openSheet(null);
 };
 
-/* ---------- 對帳 ---------- */
+/* ---------- 對帳：以「客人訂單」為單位，整包收訂金、整包收尾款 ---------- */
+let saleOpen={};
 function renderLedger(){
   const box=document.getElementById("viewLedger");
   const buys=S.items.filter(i=>i.kind==="buy" && (S.cur==="all"||i.tripId===S.cur));
   if(!buys.length){ box.innerHTML=`<div class="empty"><h3>還沒有代購項目</h3><p>新增商品時把類型選成「代購」並填上客人，這裡就會自動分組結帳。</p></div>`; return; }
-  const groups={};
-  buys.forEach(it=>{ const k=it.customer||"（未指定客人）"; (groups[k]=groups[k]||[]).push(it); });
-  box.innerHTML=Object.keys(groups).sort().map(name=>{
-    const arr=groups[name].slice().sort((x,y)=>ORDER[x.state]-ORDER[y.state]);
-    let cost=0,charge=0,profit=0,qty=0;
-    const rows=arr.map(it=>{
-      const m=calc(it); qty+=m.qty;
-      if(it.state!=="refunded"){ cost+=m.cost; charge+=m.charge; profit+=m.profit; }
-      const st=ST[it.state];
-      const col = st.tone==="go"?"var(--matcha)" : st.tone==="wait"?"var(--amber)"
-                : (st.tone==="alert"||st.tone==="mid")?"var(--shu)" : "var(--ink3)";
-      return `<tr>
+  const seen=new Set(), ords=[];
+  buys.forEach(it=>{ const o=getOrder(it.tripId,it.customer||""); if(!seen.has(o.id)){ seen.add(o.id); ords.push(o); } });
+  const PH={"待收訂金":"wait","採購中":"go","待收尾款":"mid","待退訂金":"alert","全部買不到":"done","已結清":"done"};
+  ords.sort((a,b)=>{
+    const r={"待收尾款":0,"待退訂金":1,"待收訂金":2,"採購中":3,"全部買不到":4,"已結清":5};
+    return (r[orderSum(a).phase]-r[orderSum(b).phase]) || String(a.customer).localeCompare(String(b.customer));
+  });
+  box.innerHTML=ords.map(o=>{
+    const u=orderSum(o);
+    const name=o.customer||"（未指定客人）";
+    const rows=u.arr.slice().sort((x,y)=>ORDER[x.state]-ORDER[y.state]).map(it=>{
+      const m=calc(it), st=ST[it.state]||ST.todo;
+      const lab = it.state==="todo" ? (canBuy(it)?"可以買":"等訂金") : st.t;
+      const col = it.state==="bought"?"var(--matcha)" : it.state==="unavailable"?"var(--shu)"
+                : canBuy(it)?"var(--matcha)":"var(--amber)";
+      return `<tr${it.state==="unavailable"?' style="opacity:.55"':''}>
         <td>${esc(it.nameZh)}${it.spec?`<div style="color:var(--ink3);font-size:11.5px">${esc(it.spec)}</div>`:""}</td>
         <td class="n num">${m.qty}</td>
-        <td class="n num">${twd(m.deposit)}</td>
-        <td class="n num">${twd(m.balance)}</td>
+        <td class="n num">${it.state==="unavailable"?"—":twd(m.charge)}</td>
         <td class="n num" style="color:var(--ink3)">${RS(it)}</td>
-        <td class="n" style="color:${col}">${st.t}</td>
+        <td class="n" style="color:${col}">${lab}</td>
       </tr>`;
     }).join("");
-    const f=flowSums(arr);
-    return `<section class="ledger">
+    const depVal = Math.round(u.deposit);
+    const auto = (o.depAmt==null||o.depAmt==="");
+    const sale = saleOpen[o.id] ? `<pre class="salebox">${esc(saleText(o))}</pre>
+        <div class="btnrow" style="margin:0 0 10px"><button class="act" data-ord="saleCopy" data-id="${o.id}">複製這段</button></div>` : "";
+    return `<section class="ledger ord ${o.balPaid?"settled":""}">
       <div class="lhead">
-        <h3>${esc(name)}</h3><span class="cnt num">${arr.length} 項 · ${qty} 件${(()=>{const rs=[...new Set(arr.map(x=>RS(x)))]; return rs.length>1?" · "+rs.length+" 種匯率":" · 匯率 "+rs[0];})()}</span>
+        <h3>${esc(name)}</h3>
+        <span class="phase ${PH[u.phase]}">${u.phase}</span>
+        <span class="cnt num">${u.n} 項 · ${u.qty} 件${u.nMiss?` · ${u.nMiss} 項買不到`:""}</span>
         <span class="spacer"></span>
-        <button class="act" data-copy="${esc(name)}" data-mode="deposit">複製訂金通知</button>
-        <button class="act" data-copy="${esc(name)}" data-mode="final">複製尾款結算</button>
+        <button class="act" data-ord="copyDep" data-id="${o.id}">複製訂金通知</button>
+        <button class="act go" data-ord="sale" data-id="${o.id}">${saleOpen[o.id]?"收起":"賣貨便清單"}</button>
       </div>
-      <div class="lsum">
-        <div><div class="k">先墊</div><div class="v num">${twd(cost)}</div></div>
-        <div><div class="k">應收總額</div><div class="v num">${twd(charge)}</div></div>
-        <div><div class="k">賺</div><div class="v num net">${twd(profit)}</div></div>
+
+      <div class="paybar">
+        <div class="pay">
+          <div class="k">應收總額</div>
+          <div class="v num">${twd(u.charge)}</div>
+          ${u.nMiss?`<div class="sub">買不到 ${twd(u.chargeMiss)} 已扣除</div>`:""}
+        </div>
+        <div class="pay ${o.depPaid?"on":""}">
+          <div class="k">訂金<span class="mini">${auto?`自動 ${S.set.depositPct}%`:(o.depPaid?"實收":"手動")}</span></div>
+          <div class="pedit">
+            <input class="pin num" type="number" min="0" step="1" data-dep="${o.id}" value="${depVal}" ${o.depPaid?"":""}>
+            ${auto?"":`<button class="act" data-ord="depAuto" data-id="${o.id}" title="改回自動計算">↺</button>`}
+          </div>
+          ${o.depPaid?`<div class="sub">${o.depPaidAt||""} 收到</div>`:""}
+          <button class="act ${o.depPaid?"":"state"}" data-ord="depToggle" data-id="${o.id}">${o.depPaid?"取消收款":"訂金收到了"}</button>
+        </div>
+        <div class="pay ${o.balPaid?"on":""}">
+          ${(()=>{
+            /* 全部有結果了才結算；還在採購中只給預估，免得誤以為要退錢 */
+            const est = u.charge - (o.depPaid?u.deposit:0);
+            const v = u.ready ? u.net : est;
+            const lab = !u.ready ? "尾款（預估）" : (v<0?"應退客人":"尾款");
+            const sub = !u.ready ? `還有 ${u.nTodo} 項沒結果，買到才算數`
+                      : (u.nMiss ? `已扣掉 ${u.nMiss} 項買不到` : (o.depPaid?"":"訂金收了才開始算"));
+            return `<div class="k">${lab}</div>
+          <div class="v num" style="color:${v<0?"var(--shu)":"var(--ink)"}">${twd(Math.abs(v))}</div>
+          ${sub?`<div class="sub">${sub}</div>`:""}`;
+          })()}
+          ${o.balPaid?`<div class="sub">${o.balPaidAt||""} 結清</div>`:""}
+          <button class="act ${o.balPaid?"":"state"}" data-ord="balToggle" data-id="${o.id}" ${(!o.depPaid&&!o.balPaid)?"disabled":""}>${o.balPaid?"取消結清":(u.refundDue>0?"訂金已退":"尾款收到了")}</button>
+        </div>
+        <div class="pay quiet">
+          <div class="k">刷卡金額<span class="mini">已買到 ${u.nBought} 項</span></div>
+          <div class="v num">${twd(u.cost)}</div>
+          <div class="sub">預估收益 <b style="color:${u.profit<0?"var(--shu)":"var(--matcha)"}">${twd(u.profit)}</b>　·　可退稅 ${yen(u.tax)}</div>
+        </div>
       </div>
-      <div class="lflow">
-        <div><div class="k">待收訂金</div><div class="v wait num">${twd(f.depWait)}</div></div>
-        <div><div class="k">手上訂金</div><div class="v go num">${twd(f.depHeld)}</div></div>
-        <div><div class="k">待收尾款</div><div class="v mid num">${twd(f.balWait)}</div></div>
-        <div><div class="k">待退訂金</div><div class="v ${f.depRefund?"mid":""} num">${twd(f.depRefund)}</div></div>
-      </div>
-      <table class="lt"><thead><tr><th>商品</th><th class="n">件</th><th class="n">訂金</th><th class="n">尾款</th><th class="n">匯率</th><th class="n">狀態</th></tr></thead><tbody>${rows}</tbody></table>
+      ${sale}
+      <table class="lt"><thead><tr><th>商品</th><th class="n">件</th><th class="n">應收</th><th class="n">匯率</th><th class="n">狀態</th></tr></thead><tbody>${rows}</tbody></table>
     </section>`;
   }).join("");
-  box.querySelectorAll("[data-copy]").forEach(b=>b.onclick=()=>copyFor(b.dataset.copy,b.dataset.mode));
+
+  box.querySelectorAll("[data-dep]").forEach(inp=>{
+    inp.onchange=()=>{
+      const o=S.orders.find(x=>x.id===inp.dataset.dep); if(!o) return;
+      const v=inp.value.trim();
+      o.depAmt = v===""?null:Math.max(0,+v);
+      save(); cloudPutOrder(o); renderLedger(); render();
+    };
+  });
+  box.querySelectorAll("[data-ord]").forEach(b=>b.onclick=()=>ordAction(b.dataset.ord,b.dataset.id));
 }
 
-function copyFor(name,mode){
-  const arr=S.items.filter(i=>i.kind==="buy" && (i.customer||"（未指定客人）")===name);
-  let txt="";
-  if(mode==="deposit"){
-    const wait=arr.filter(i=>i.state==="deposit_wait");
-    if(!wait.length){ toast("這位客人沒有待收訂金的項目"); return; }
-    let dep=0,chg=0;
-    const lines=wait.map((it,i)=>{
-      const m=calc(it); dep+=m.deposit; chg+=m.charge;
-      return (i+1)+". "+it.nameZh+(it.spec?"（"+it.spec+"）":"")+" ×"+m.qty+"　"+twd(m.charge);
-    });
-    const rs=[...new Set(wait.map(x=>RS(x)))];
-    const tn=S.cur==="all"?"":`（${tripName(S.cur)}）`;
-    txt="【"+name+"】"+tn+"代購確認\n"+lines.join("\n")
-      +"\n—\n總金額 "+twd(chg)+"\n訂金 "+twd(dep)+"（"+S.set.depositPct+"%）"
-      +"\n換算匯率 "+rs.join("／")
-      +"\n收到訂金後開始採購；若當地缺貨買不到，訂金會全額退回。";
-  }else{
-    const live=arr.filter(i=>i.state!=="refunded");
-    if(!live.length){ toast("這位客人沒有可結算的項目"); return; }
-    let chg=0,dep=0,bal=0,refund=0;
-    const lines=live.map((it,i)=>{
-      const m=calc(it);
-      if(it.state==="unavailable"){ refund+=m.deposit; return (i+1)+". "+it.nameZh+" ×"+m.qty+"　買不到，退訂金 "+twd(m.deposit); }
-      chg+=m.charge; dep+=m.deposit; bal+=m.balance;
-      return (i+1)+". "+it.nameZh+(it.spec?"（"+it.spec+"）":"")+" ×"+m.qty+"　"+twd(m.charge);
-    });
-    const tn2=S.cur==="all"?"":`（${tripName(S.cur)}）`;
-    txt="【"+name+"】"+tn2+"代購結算\n"+lines.join("\n")
-      +"\n—\n商品合計 "+twd(chg)+"\n已收訂金 −"+twd(dep)
-      +(refund?"\n退回訂金 −"+twd(refund):"")
-      +"\n應付尾款 "+twd(Math.max(0,bal-refund));
+function ordAction(act,id){
+  const o=S.orders.find(x=>x.id===id); if(!o) return;
+  const u=orderSum(o);
+  if(act==="depToggle"){
+    if(o.depPaid){ if(!confirm("取消「訂金已收」？")) return; o.depPaid=false; o.depPaidAt=""; }
+    else{
+      if(o.depAmt==null||o.depAmt==="") o.depAmt=Math.round(u.depAuto);  /* 收款當下把金額定下來 */
+      o.depPaid=true; o.depPaidAt=today();
+    }
+    save(); cloudPutOrder(o); renderLedger(); render();
+    toast(o.depPaid?`已記錄訂金 ${twd(o.depAmt)}，可以開始採購`:"已取消訂金紀錄");
   }
+  if(act==="balToggle"){
+    if(o.balPaid){ if(!confirm("取消「已結清」？")) return; o.balPaid=false; o.balPaidAt=""; }
+    else{
+      if(u.nTodo>0 && !confirm(`還有 ${u.nTodo} 項沒有採購結果，確定要結清嗎？`)) return;
+      o.balPaid=true; o.balPaidAt=today();
+    }
+    save(); cloudPutOrder(o); renderLedger(); render();
+    toast(o.balPaid?"已結清":"已取消結清");
+  }
+  if(act==="depAuto"){ o.depAmt=null; save(); cloudPutOrder(o); renderLedger(); render(); toast("訂金改回自動計算"); }
+  if(act==="sale"){ saleOpen[o.id]=!saleOpen[o.id]; renderLedger(); }
+  if(act==="saleCopy"){ copyText(saleText(o),"賣貨便清單已複製"); }
+  if(act==="copyDep"){ copyText(depText(o),"訂金通知已複製"); }
+}
+
+/* 賣貨便上架用：只列買到的東西、數量、要收的尾款 */
+function saleText(o){
+  const u=orderSum(o);
+  const got=u.arr.filter(i=>i.state==="bought");
+  const miss=u.arr.filter(i=>i.state==="unavailable");
+  const tn=S.cur==="all"?"":`${tripName(o.tripId)}`;
+  const L=[];
+  L.push("【"+(o.customer||"未指定客人")+"】"+(tn?tn:"")+"代購");
+  if(!got.length) L.push("（還沒有買到的商品）");
+  got.forEach(it=>{
+    const m=calc(it);
+    L.push(it.nameZh+(it.spec?"（"+it.spec+"）":"")+" ×"+m.qty);
+  });
+  if(miss.length){
+    L.push("—");
+    miss.forEach(it=>L.push("✕ "+it.nameZh+(it.spec?"（"+it.spec+"）":"")+" 買不到"));
+  }
+  L.push("—");
+  L.push("商品合計 "+twd(u.chargeGot));
+  if(o.depPaid) L.push("已收訂金 −"+twd(u.deposit));
+  if(u.net<0) L.push("應退還你 "+twd(-u.net));
+  else L.push("賣貨便收款 "+twd(u.net));
+  if(u.nTodo>0) L.push("（還有 "+u.nTodo+" 項還沒有採購結果，金額可能會再變動）");
+  return L.join("\n");
+}
+function depText(o){
+  const u=orderSum(o);
+  const live=u.arr.filter(i=>i.state!=="unavailable");
+  if(!live.length) return "（這位客人沒有可報價的項目）";
+  const rs=[...new Set(live.map(x=>RS(x)))];
+  const tn=S.cur==="all"?"":`（${tripName(o.tripId)}）`;
+  const L=["【"+(o.customer||"未指定客人")+"】"+tn+"代購確認"];
+  live.forEach((it,i)=>{
+    const m=calc(it);
+    L.push((i+1)+". "+it.nameZh+(it.spec?"（"+it.spec+"）":"")+" ×"+m.qty+"　"+twd(m.charge));
+  });
+  L.push("—");
+  L.push("總金額 "+twd(u.charge));
+  L.push("訂金 "+twd(u.deposit)+(o.depAmt==null?"（"+S.set.depositPct+"%）":""));
+  L.push("換算匯率 "+rs.join("／"));
+  L.push("收到訂金後開始採購；若當地缺貨買不到，這部分會全額退回。");
+  return L.join("\n");
+}
+function copyText(txt,okMsg){
   if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(txt).then(()=>toast("已複製，可直接貼到 LINE"),()=>toast("複製失敗，請手動選取"));
-  } else { toast("此瀏覽器不支援複製"); }
+    navigator.clipboard.writeText(txt).then(()=>toast(okMsg||"已複製"),()=>toast("複製失敗，請手動選取"));
+  } else { toast("此瀏覽器不支援複製，請手動選取文字"); }
+}
+
+/* ---------- 複製既有商品：同規格再建一筆只要改客人 ---------- */
+function dupItem(it){
+  const copy={...it, id:Date.now()+"."+Math.random().toString(36).slice(2,7), ts:Date.now(),
+              state:"todo", paidYen:null, cardTwd:null, orderDate:today()};
+  editId=null; pendingImg=copy.img||null;
+  document.getElementById("sheetTitle").textContent="複製商品";
+  document.getElementById("delBtn").classList.add("hide");
+  form.reset(); fillTripSelect(copy.tripId);
+  for(const k of ["nameZh","nameJa","spec","url","qty","kind","customer","store","category","price","state","note"]){
+    if(form.elements[k]) form.elements[k].value = copy[k] ?? "";
+  }
+  form.elements.taxOv.value=""; form.elements.chargeOv.value=(copy.chargeOv==null?"":copy.chargeOv);
+  form.elements.paidYen.value=""; form.elements.cardTwd.value="";
+  form.elements.rateSell.value=copy.rateSell ?? defRS();
+  form.elements.rateReal.value=copy.rateReal ?? defRR();
+  form.elements.orderDate.value=today();
+  syncKind(); paintImg(); updateCalc();
+  sheet.setAttribute("open","");
+  setTimeout(()=>{ const c=form.elements.customer; if(!c.disabled){ c.focus(); c.select(); } else form.elements.qty.focus(); },60);
+  toast("已複製內容，改一下客人或數量就能存");
 }
 
 /* ---------- 檔期管理 ---------- */
@@ -1199,13 +1523,14 @@ function newTrip(){
 }
 function tripSums(id){
   const arr=tripItems(id);
-  let cost=0,charge=0,profit=0,depWait=0,balWait=0;
+  let cost=0,charge=0,profit=0;
   arr.forEach(it=>{
-    const m=calc(it);
-    if(it.state==="refunded") return;
-    cost+=m.cost; charge+=m.charge; profit+=m.profit;
-    if(it.state==="deposit_wait") depWait+=m.deposit;
-    if(it.state==="bought") balWait+=m.balance;
+    if(it.state==="unavailable") return;
+    const m=calc(it); cost+=m.cost; charge+=m.charge; profit+=m.profit;
+  });
+  let depWait=0,balWait=0;
+  S.orders.filter(o=>(o.tripId||"")===id).forEach(o=>{
+    const u=orderSum(o); depWait+=u.depWait; balWait+=u.balDue;
   });
   return {n:arr.length,cost,charge,profit,depWait,balWait};
 }
@@ -1270,6 +1595,10 @@ function tripAction(act,id){
         S.items=S.items.filter(it=>it.tripId!==id);
       }
     }
+    S.orders.filter(o=>o.tripId===id).forEach(o=>cloudDelOrder(o.id));
+    S.orders=S.orders.filter(o=>o.tripId!==id);
+    S.checkouts.filter(c=>c.tripId===id).forEach(c=>cloudDelCo(c.id));
+    S.checkouts=S.checkouts.filter(c=>c.tripId!==id);
     S.trips=S.trips.filter(x=>x.id!==id);
     if(S.cur===id) S.cur=S.trips.length?S.trips[0].id:"all";
     save(); cloudDelTrip(id); render(); renderSettings(); toast("已刪除檔期");
@@ -1278,13 +1607,12 @@ function tripAction(act,id){
 
 
 
-/* ---------- 採購彙總：相同商品合併數量，依店家分組 ---------- */
+/* ---------- 採購：相同商品合併數量、依店家分組；下半部是店家結帳單 ---------- */
 let buyOnlyReady=true;
 function buyGroups(){
   const live=S.items.filter(it=>(S.cur==="all"||it.tripId===S.cur));
-  const pick=buyOnlyReady
-    ? live.filter(it=>it.state==="deposit_paid"||it.state==="todo")
-    : live.filter(it=>!["settled","refunded","unavailable"].includes(it.state));
+  const pick=buyOnlyReady ? live.filter(it=>canBuy(it))
+                          : live.filter(it=>it.state==="todo");
   const byStore={};
   pick.forEach(it=>{
     const st=it.store||"（未指定店家）";
@@ -1306,15 +1634,10 @@ function renderBuy(){
   let totQty=0, totKind=0;
   stores.forEach(s=>Object.values(g[s]).forEach(x=>{totQty+=x.qty;totKind++;}));
   const head=`<div class="buybar">
-    <label class="chk"><input type="checkbox" id="buyOnly" ${buyOnlyReady?"checked":""}> 只看可以買的</label>
+    <label class="chk"><input type="checkbox" id="buyOnly" ${buyOnlyReady?"checked":""}> 只看可以買的（訂金已收）</label>
     <span class="sp"></span>
     <b class="num">${totKind}</b> 種　<b class="num">${totQty}</b> 件</div>`;
-  if(!stores.length){
-    box.innerHTML=head+`<div class="empty"><h3>沒有待採購的商品</h3><p>${buyOnlyReady?"目前沒有「可以買」或「自購待買」的項目。取消上面的勾選可以看全部未結束的商品。":"這個檔期還沒有商品。"}</p></div>`;
-    document.getElementById("buyOnly").onchange=e=>{buyOnlyReady=e.target.checked;renderBuy();};
-    return;
-  }
-  box.innerHTML=head+stores.map(st=>{
+  const list = stores.length ? stores.map(st=>{
     const rows=Object.values(g[st]).sort((a,b)=>b.qty-a.qty).map(x=>`
       <div class="brow">
         <div class="bq num">×${x.qty}</div>
@@ -1325,7 +1648,7 @@ function renderBuy(){
         </div>
         <div class="bact">
           ${x.url?`<button class="act go" data-u="${esc(x.url)}">商品頁</button>`:""}
-          <button class="act state" data-done="${x.ids.join(",")}">全部買到了</button>
+          <button class="act state" data-done="${x.ids.join(",")}">買到了</button>
         </div>
       </div>`).join("");
     const sq=Object.values(g[st]).reduce((a,b)=>a+b.qty,0);
@@ -1333,24 +1656,192 @@ function renderBuy(){
       <div class="lhead"><h3>${esc(st)}</h3>
         <span class="cnt num">${Object.keys(g[st]).length} 種 · ${sq} 件</span>
         <span class="spacer"></span>
-        <button class="act go" data-map="${esc(st)}">找店家</button></div>
+        <button class="act go" data-map="${esc(st)}">找店家</button>
+        <button class="act" data-newco="${esc(st)}">結帳</button></div>
       ${rows}</section>`;
-  }).join("");
+  }).join("") : `<div class="empty"><h3>沒有待採購的商品</h3><p>${buyOnlyReady?"目前沒有「可以買」的項目。訂金收了才會出現在這裡；取消上面的勾選可以看全部待買商品。":"這個檔期的商品都有結果了。"}</p></div>`;
+
+  box.innerHTML=head+list+checkoutPanel();
   document.getElementById("buyOnly").onchange=e=>{buyOnlyReady=e.target.checked;renderBuy();};
   box.querySelectorAll("[data-map]").forEach(b=>b.onclick=()=>openMap(b.dataset.map));
   box.querySelectorAll("[data-u]").forEach(b=>b.onclick=()=>window.open(b.dataset.u,"_blank","noopener"));
+  box.querySelectorAll("[data-newco]").forEach(b=>b.onclick=()=>openCo(null,b.dataset.newco));
+  box.querySelectorAll("[data-co]").forEach(b=>b.onclick=()=>coAction(b.dataset.co,b.dataset.id));
   box.querySelectorAll("[data-done]").forEach(b=>b.onclick=()=>{
     const ids=b.dataset.done.split(",");
     const list=S.items.filter(x=>ids.includes(x.id));
-    if(!confirm("把這 "+list.length+" 筆標成已購？")) return;
-    list.forEach(it=>{
-      it.state = it.kind==="self" ? "bought" : "bought";
-      it.rateLocked=true; it.depTaken=it.kind!=="self";
-      cloudPut(it);
-    });
+    if(list.length>1 && !confirm("把這 "+list.length+" 筆標成已買到？")) return;
+    list.forEach(it=>{ it.state="bought"; cloudPut(it); });
     save(); render(); renderBuy(); toast("已標記 "+list.length+" 筆");
   });
 }
+
+/* ===== 店家結帳單 ===== */
+function tripCheckouts(){ return S.checkouts.filter(c=>S.cur==="all"||c.tripId===S.cur); }
+function coSum(c){
+  const members=S.items.filter(x=>Array.isArray(c.itemIds)&&c.itemIds.includes(x.id));
+  const listed=members.reduce((a,x)=>a+(+x.price||0)*Math.max(1,+x.qty||1),0);
+  const tot=(c.twd===""||c.twd==null)?null:(+c.twd+(+c.feeTwd||0));
+  return {members, listed, tot};
+}
+function checkoutPanel(){
+  const cs=tripCheckouts().slice().sort((a,b)=>String(b.date||"").localeCompare(String(a.date||"")));
+  const rows = cs.length ? cs.map(c=>{
+    const u=coSum(c);
+    const money = u.tot!=null
+      ? `<b class="num">${twd(u.tot)}</b><span class="cosub">刷卡 ${twd(+c.twd||0)}＋手續費 ${twd(+c.feeTwd||0)}${c.yen?`　·　實付 ${yen(c.yen)}`:""}</span>`
+      : (c.yen ? `<b class="num">${yen(c.yen)}</b><span class="cosub">卡單還沒出來，先用匯率推估</span>`
+               : `<b class="num" style="color:var(--amber)">未填金額</b>`);
+    return `<div class="corow">
+      <div class="comain">
+        <div class="con">${esc(c.store||"（未指定店家）")}${c.label?`　<span class="tag">${esc(c.label)}</span>`:""}</div>
+        <div class="cosub">${c.date||"—"}　·　${u.members.length} 項　·　標價合計 ${yen(u.listed)}</div>
+      </div>
+      <div class="comoney">${money}</div>
+      <div class="bact">
+        <button class="act" data-co="edit" data-id="${c.id}">編輯</button>
+        <button class="act del" data-co="del" data-id="${c.id}">刪除</button>
+      </div>
+    </div>`;
+  }).join("") : `<p class="hint" style="margin:0">還沒有結帳單。在上面的店家區塊按「結帳」，勾選這張發票涵蓋的商品，填上實付日幣就好；卡單出來之後再回來補台幣和手續費。</p>`;
+  return `<section class="ledger copanel">
+    <div class="lhead"><h3>店家結帳單</h3>
+      <span class="cnt num">${cs.length} 張</span>
+      <span class="spacer"></span>
+      <button class="act go" data-co="new" data-id="">＋ 新增結帳單</button></div>
+    ${rows}</section>`;
+}
+function coAction(act,id){
+  if(act==="new"){ openCo(null,""); return; }
+  const c=S.checkouts.find(x=>x.id===id); if(!c) return;
+  if(act==="edit") openCo(c,c.store);
+  if(act==="del"){
+    if(!confirm("刪除這張結帳單？商品會回到依標價推估成本。")) return;
+    S.checkouts=S.checkouts.filter(x=>x.id!==id);
+    save(); cloudDelCo(id); render(); renderBuy(); toast("已刪除結帳單");
+  }
+}
+
+/* 結帳單編輯：選店家 → 勾這張發票涵蓋的商品 → 填金額 */
+let coId=null;
+const coSheet=document.getElementById("coSheet"), coForm=document.getElementById("coForm");
+function coCandidates(store){
+  const tid=S.cur==="all"?null:S.cur;
+  return S.items.filter(it=>{
+    if(tid && it.tripId!==tid) return false;
+    if(it.state==="unavailable") return false;
+    const used=checkoutOf(it);
+    if(used && used.id!==coId) return false;        /* 已經被別張發票吃掉 */
+    if(store && (it.store||"")!==store) return false;
+    return true;
+  });
+}
+function openCo(c,store){
+  coId = c?c.id:null;
+  document.getElementById("coTitle").textContent = c?"編輯結帳單":"新增結帳單";
+  document.getElementById("coDel").classList.toggle("hide",!c);
+  coForm.reset();
+  const stores=[...new Set(S.items.filter(i=>S.cur==="all"||i.tripId===S.cur).map(i=>i.store).filter(Boolean))].sort();
+  const sel=coForm.elements.store;
+  sel.innerHTML=`<option value="">（全部店家）</option>`+stores.map(v=>`<option${v===(c?c.store:store)?" selected":""}>${esc(v)}</option>`).join("");
+  sel.value = c?(c.store||""):(store||"");
+  coForm.elements.label.value = c?(c.label||""):"";
+  coForm.elements.date.value = c?(c.date||today()):today();
+  coForm.elements.yen.value = (c&&c.yen!=null&&c.yen!=="")?c.yen:"";
+  coForm.elements.twd.value = (c&&c.twd!=null&&c.twd!=="")?c.twd:"";
+  coForm.elements.feeTwd.value = (c&&c.feeTwd!=null&&c.feeTwd!=="")?c.feeTwd:"";
+  coForm.elements.note.value = c?(c.note||""):"";
+  coPickInit(c?c.itemIds:[]);
+  coSheet.setAttribute("open","");
+}
+function closeCo(){ coSheet.removeAttribute("open"); coId=null; }
+function coPickInit(pre){
+  const picked=new Set(pre||[]);
+  coSheet._picked=picked;
+  coPaintPick();
+}
+function coPaintPick(){
+  const box=document.getElementById("coPick");
+  const store=coForm.elements.store.value;
+  const cands=coCandidates(store);
+  const picked=coSheet._picked;
+  if(!cands.length){ box.innerHTML=`<p class="hint" style="margin:0">這個店家沒有可結帳的商品（買不到的、或已經在別張結帳單裡的不會出現）。</p>`; coPaintSum(); return; }
+  box.innerHTML=cands.map(it=>{
+    const q=Math.max(1,+it.qty||1), sub=(+it.price||0)*q;
+    return `<label class="pickrow${picked.has(it.id)?" on":""}">
+      <input type="checkbox" data-pick="${it.id}" ${picked.has(it.id)?"checked":""}>
+      <span class="pn">${esc(it.nameZh||"未命名")}${it.spec?`<i>${esc(it.spec)}</i>`:""}</span>
+      <span class="pw">${it.kind==="self"?"自購":esc(it.customer||"未指定")}</span>
+      <span class="pq num">×${q}</span>
+      <span class="pp num">${yen(sub)}</span>
+    </label>`;
+  }).join("");
+  box.querySelectorAll("[data-pick]").forEach(cb=>{
+    cb.onchange=()=>{
+      if(cb.checked) picked.add(cb.dataset.pick); else picked.delete(cb.dataset.pick);
+      cb.closest(".pickrow").classList.toggle("on",cb.checked);
+      coPaintSum();
+    };
+  });
+  coPaintSum();
+}
+function coPaintSum(){
+  const picked=coSheet._picked||new Set();
+  const members=S.items.filter(x=>picked.has(x.id));
+  const listed=members.reduce((a,x)=>a+(+x.price||0)*Math.max(1,+x.qty||1),0);
+  const y=coForm.elements.yen.value===""?null:+coForm.elements.yen.value;
+  const t=coForm.elements.twd.value===""?null:+coForm.elements.twd.value;
+  const f=+coForm.elements.feeTwd.value||0;
+  const tot=t==null?null:t+f;
+  let msg;
+  if(!members.length) msg=`<div class="row"><span class="lab">還沒勾選商品</span><i class="dots"></i><span class="val">請先勾這張發票買了哪些</span></div>`;
+  else{
+    msg=`<div class="row"><span class="lab">已勾選</span><i class="dots"></i><span class="val num">${members.length} 項　標價合計 ${yen(listed)}</span></div>`;
+    if(y!=null){
+      const pct = listed? y/listed : null;
+      const odd = pct!=null && (pct>1.3||pct<0.7);
+      msg+=`<div class="row paid"><span class="lab">實付日幣</span><i class="dots"></i><span class="val num">${yen(y)}${pct!=null?`　（標價的 ${(pct*100).toFixed(0)}%）`:""}</span></div>`;
+      if(odd) msg+=`<div class="row" style="color:var(--amber)"><span class="lab">⚠ 金額對不太起來</span><i class="dots"></i><span class="val" style="font-size:11.5px">${pct>1.3?"實付比標價高很多，是不是有商品沒勾到？":"實付比標價低很多，確認一下金額或勾選的項目"}</span></div>`;
+    }
+    if(tot!=null) msg+=`<div class="row total actual"><span class="lab">刷卡合計（含手續費）</span><i class="dots"></i><span class="val num">${twd(tot)}</span></div>`;
+    else if(y!=null) msg+=`<div class="row total"><span class="lab">推估成本</span><i class="dots"></i><span class="val num">${twd(y*(+S.set.rateReal||0)*(1+(+S.set.cardFeePct||0)/100))}</span></div>`;
+    msg+=`<div class="row"><span class="lab">分攤方式</span><i class="dots"></i><span class="val" style="font-size:11.5px;color:var(--ink3)">依各商品標價比例</span></div>`;
+  }
+  document.getElementById("coCalc").innerHTML=msg;
+}
+coSheet.querySelectorAll("[data-close]").forEach(b=>b.onclick=closeCo);
+coForm.elements.store.addEventListener("change",coPaintPick);
+["yen","twd","feeTwd"].forEach(k=>coForm.elements[k].addEventListener("input",coPaintSum));
+coForm.onsubmit=e=>{
+  e.preventDefault();
+  const picked=[...(coSheet._picked||new Set())];
+  if(!picked.length){ toast("請至少勾選一項商品"); return; }
+  const tid = S.cur==="all" ? ((S.items.find(x=>x.id===picked[0])||{}).tripId||"") : S.cur;
+  const rec={
+    id: coId || newId("c"),
+    tripId: tid,
+    store: coForm.elements.store.value.trim(),
+    label: coForm.elements.label.value.trim(),
+    date: coForm.elements.date.value||today(),
+    itemIds: picked,
+    yen: coForm.elements.yen.value===""?null:+coForm.elements.yen.value,
+    twd: coForm.elements.twd.value===""?null:+coForm.elements.twd.value,
+    feeTwd: coForm.elements.feeTwd.value===""?null:+coForm.elements.feeTwd.value,
+    note: coForm.elements.note.value.trim()
+  };
+  if(coId) S.checkouts=S.checkouts.map(x=>x.id===coId?rec:x);
+  else S.checkouts.push(rec);
+  /* 結完帳代表東西拿到手了 */
+  S.items.forEach(it=>{ if(picked.includes(it.id) && it.state==="todo"){ it.state="bought"; cloudPut(it); } });
+  save(); cloudPutCo(rec); closeCo(); render(); renderBuy();
+  toast(coId?"結帳單已更新":"結帳單已建立，成本已分攤到 "+picked.length+" 項商品");
+};
+document.getElementById("coDel").onclick=()=>{
+  if(!coId) return;
+  if(!confirm("刪除這張結帳單？")) return;
+  const _d=coId; S.checkouts=S.checkouts.filter(x=>x.id!==_d);
+  save(); cloudDelCo(_d); closeCo(); render(); renderBuy(); toast("已刪除");
+};
 
 /* ---------- 批次匯入（CSV／從試算表直接貼） ---------- */
 const IMP_COLS={
@@ -1376,13 +1867,14 @@ const IMP_COLS={
   note:["備註","說明"],
   tripName:["檔期","行程"]
 };
-const IMP_STATE={"待收訂金":"deposit_wait","等訂金":"deposit_wait","未收訂金":"deposit_wait",
-  "可以買":"deposit_paid","已收訂金":"deposit_paid",
-  "已購":"bought","待收尾款":"bought","已買":"bought",
-  "已結清":"settled","結清":"settled",
-  "買不到":"unavailable","缺貨":"unavailable",
-  "已退訂金":"refunded",
-  "待買":"todo","自購待買":"todo"};
+/* 舊的狀態字樣也收，一律對到新的三種 */
+const IMP_STATE={"待收訂金":"todo","等訂金":"todo","未收訂金":"todo","可以買":"todo",
+  "已收訂金":"todo","待買":"todo","自購待買":"todo",
+  "已購":"bought","待收尾款":"bought","已買":"bought","已買到":"bought","已結清":"bought","結清":"bought",
+  "買不到":"unavailable","缺貨":"unavailable","已退訂金":"unavailable"};
+/* 匯入時若標了「已收訂金／已結清」，順手把客人訂單的狀態也帶起來 */
+const IMP_DEP=["已收訂金","可以買","已購","待收尾款","已買","已買到","已結清","結清"];
+const IMP_BAL=["已結清","結清"];
 
 /* 支援逗號或 Tab 分隔、引號包住的欄位、換行與 BOM */
 function parseTable(text){
@@ -1402,7 +1894,13 @@ function parseTable(text){
     else cell+=c;
   }
   row.push(cell); rows.push(row);
-  return rows.filter(r=>r.some(x=>String(x).trim()!==""));
+  const out=rows.filter(r=>r.some(x=>String(x).trim()!==""));
+  /* 連續貼好幾段（每段都帶標題列）時，後面重複的標題自動略過 */
+  if(out.length>1){
+    const h=out[0].join("\u0001");
+    return out.filter((r,i)=>i===0||r.join("\u0001")!==h);
+  }
+  return out;
 }
 function mapHeader(cells){
   const map={};
@@ -1439,8 +1937,8 @@ function importRows(text,dryRun){
     }
     const kindRaw=get(r,"kind");
     const kind=/自購|自用|自己/.test(kindRaw)?"self":"buy";
-    let st=IMP_STATE[get(r,"state")] || (kind==="self"?"todo":"deposit_wait");
-    if(kind==="self" && !["todo","bought"].includes(st)) st="todo";
+    const stRaw=get(r,"state");
+    let st=IMP_STATE[stRaw] || "todo";
     const tObj=S.trips.find(x=>x.id===tripId);
     const defSell=(tObj&&tObj.rateSell!=null&&tObj.rateSell!=="")?tObj.rateSell:S.set.rateSell;
     const defReal=(tObj&&tObj.rateReal!=null&&tObj.rateReal!=="")?tObj.rateReal:S.set.rateReal;
@@ -1454,10 +1952,10 @@ function importRows(text,dryRun){
       orderDate:get(r,"orderDate")||today(),
       rateSell:num(get(r,"rateSell"))??defSell,
       rateReal:num(get(r,"rateReal"))??defReal,
-      rateLocked:!["deposit_wait","todo"].includes(st),
-      depTaken:["deposit_paid","bought","settled","unavailable"].includes(st),
-      taxOv:num(get(r,"taxOv")), chargeOv:num(get(r,"chargeOv")), depOv:num(get(r,"depOv")),
-      paidYen:num(get(r,"paidYen")), cardTwd:num(get(r,"cardTwd")), img:null
+      taxOv:num(get(r,"taxOv")), chargeOv:num(get(r,"chargeOv")),
+      paidYen:num(get(r,"paidYen")), cardTwd:num(get(r,"cardTwd")), img:null,
+      _depPaid: IMP_DEP.includes(stRaw), _balPaid: IMP_BAL.includes(stRaw),
+      _depOv: num(get(r,"depOv"))
     });
   });
   return {items:out, warn};
@@ -1518,7 +2016,7 @@ function renderSettings(){
         <button class="btn primary" id="saveSet">儲存設定</button>
         <button class="btn" id="applyRate">把今日匯率套用到未鎖定項目</button>
       </div>
-      <p class="hint" style="margin:12px 0 0">目前有 <b>${unlockedCount()}</b> 筆還在「待收訂金／自購待買」、匯率尚未鎖定，可以重新套用。已收訂金的項目不會被動到。</p>
+      <p class="hint" style="margin:12px 0 0">目前有 <b>${unlockedCount()}</b> 筆還沒收訂金（或是自購），匯率可以重新套用。已經收過訂金的客人不會被動到。</p>
     </section>
 
     <section class="panel">
@@ -1551,6 +2049,25 @@ function renderSettings(){
       </div>
       <pre id="fbDiagOut" class="hide" style="margin:12px 0 0; padding:11px 12px; background:var(--paper); border:1px solid var(--rule); border-radius:9px; font-size:11.5px; line-height:1.7; white-space:pre-wrap; word-break:break-all"></pre>
       <p class="hint" style="margin:12px 0 0">登入後手機和電腦會即時同步。沒網路時照常操作，Firestore 會把異動排隊，連上網自動補傳。${cacheMode==="memory"?"<br><b style='color:var(--amber)'>這台裝置的離線快取無法使用</b>，已改用線上模式：有網路時一切正常，沒網路時無法同步（本機清單仍可操作）。":""}</p>
+    </section>
+
+    <section class="panel">
+      <h3>從商品頁一鍵帶入</h3>
+      <p class="hint">把下面的按鈕拖到瀏覽器書籤列（手機看下面的步驟）。之後在任何商品頁按一下，就會跳回這個清單並把<b>商品名、日文名、價格、圖片、網址</b>都填好，你只要補客人和數量。</p>
+      <div class="btnrow" style="margin-top:10px">
+        <a class="btn primary" id="bmLink" href="#" onclick="return false" style="cursor:grab">📋 加到代購清單</a>
+        <button class="btn" id="bmCopy">複製書籤網址</button>
+      </div>
+      <details style="margin-top:12px">
+        <summary style="cursor:pointer; font-size:12.5px; color:var(--ink2)">手機（iPhone／Android）怎麼裝</summary>
+        <ol class="hint" style="margin:8px 0 0; padding-left:20px; line-height:2">
+          <li>按上面的<b>「複製書籤網址」</b>。</li>
+          <li>Safari 隨便開一個網頁，按分享鈕 → <b>加入書籤</b>，存起來。</li>
+          <li>點網址列的書籤圖示 → 編輯 → 找到剛剛那筆 → 把網址整段刪掉，<b>貼上</b>剛剛複製的內容，名稱改成「加到代購清單」。</li>
+          <li>以後在商品頁，點網址列 → 打「加到」→ 選這個書籤就會跑了。</li>
+        </ol>
+      </details>
+      <p class="hint" style="margin:12px 0 0">抓不到價格也沒關係，表單會開著讓你手動填。有些網站（例如需要登入的會員價）擋得比較嚴，那就用下面的批次匯入或直接新增。</p>
     </section>
 
     <section class="panel">
@@ -1623,14 +2140,16 @@ function renderSettings(){
     </section>
 
     <section class="panel">
-      <h3>收款流程</h3>
-      <p class="hint" style="margin-bottom:10px">清單上的狀態按一下就往前一步，不用進編輯頁。</p>
-      <div class="row"><span class="lab" style="color:var(--amber)">待收訂金</span><i class="dots"></i><span class="val">已報價，先別買</span></div>
-      <div class="row"><span class="lab" style="color:var(--matcha)">可以買</span><i class="dots"></i><span class="val">訂金入帳，到店可以下手</span></div>
-      <div class="row"><span class="lab" style="color:var(--shu)">待收尾款</span><i class="dots"></i><span class="val">已買到，回國後收尾款</span></div>
-      <div class="row"><span class="lab">已結清</span><i class="dots"></i><span class="val">尾款收完，這筆結束</span></div>
-      <div class="row"><span class="lab" style="color:var(--shu)">買不到</span><i class="dots"></i><span class="val">缺貨，訂金要退回去</span></div>
-      <div class="row"><span class="lab">已退訂金</span><i class="dots"></i><span class="val">訂金退完，這筆結束</span></div>
+      <h3>兩層流程</h3>
+      <p class="hint" style="margin-bottom:10px">商品只管「買到沒有」，錢則是整包訂單一起算。客人是整筆下訂、整筆付款的，所以訂金和尾款記在「對帳」頁的客人卡片上，不用一件一件拆。</p>
+      <div class="row"><span class="lab" style="color:var(--ink2)"><b>商品</b>（清單頁）</span><i class="dots"></i><span class="val">待買 → 已買到／買不到</span></div>
+      <div class="row"><span class="lab" style="color:var(--amber)">等訂金</span><i class="dots"></i><span class="val">這位客人的訂金還沒收，先別買</span></div>
+      <div class="row"><span class="lab" style="color:var(--matcha)">可以買</span><i class="dots"></i><span class="val">訂金入帳了，到店可以下手</span></div>
+      <div class="row"><span class="lab" style="color:var(--ink2)"><b>客人訂單</b>（對帳頁）</span><i class="dots"></i><span class="val">待收訂金 → 採購中 → 待收尾款 → 已結清</span></div>
+      <div class="row dep"><span class="lab">訂金</span><i class="dots"></i><span class="val">預設應收總額的 ${S.set.depositPct}%，可以直接在卡片上改成實收金額</span></div>
+      <div class="row bal"><span class="lab">尾款</span><i class="dots"></i><span class="val">應收總額 − 已收訂金；買不到的部分會先扣掉</span></div>
+      <div class="row"><span class="lab" style="color:var(--shu)">應退客人</span><i class="dots"></i><span class="val">扣完之後是負的，代表訂金收多了要退</span></div>
+      <p class="hint" style="margin:12px 0 0">自購沒有客人那一層，按「買到了」就結束，不會卡在收款流程裡。</p>
     </section>
 
     <section class="panel">
@@ -1638,18 +2157,23 @@ function renderSettings(){
       <p class="hint" style="margin-bottom:10px">每一筆的錢是這樣算出來的，有疑問時可以回來對。</p>
       <div class="row"><span class="lab">標價小計</span><i class="dots"></i><span class="val">當地單價 × 數量</span></div>
       <div class="row"><span class="lab">退稅</span><i class="dots"></i><span class="val">標價小計 ÷ (1 + 稅率) × 稅率</span></div>
-      <div class="row"><span class="lab">日圓實際支出</span><i class="dots"></i><span class="val">填了「實付 ¥」就用它${S.set.refundMode==="airport"?"（再扣退稅）":""}，否則用 標價小計 − 退稅</span></div>
-      <div class="row"><span class="lab">我的成本（預估）</span><i class="dots"></i><span class="val">日圓實際支出 × <b>本筆</b>實際匯率 × (1 + ${S.set.cardFeePct}% 手續費)</span></div>
-      <div class="row actual"><span class="lab">我的成本（實際）</span><i class="dots"></i><span class="val">填了「刷卡帳單 NT$」就以帳單為準</span></div>
+      <div class="row"><span class="lab">日圓實際支出</span><i class="dots"></i><span class="val">有結帳單就用分攤到的金額${S.set.refundMode==="airport"?"（再扣退稅）":""}，否則用 標價小計 − 退稅</span></div>
       <div class="row"><span class="lab">跟客人收</span><i class="dots"></i><span class="val">${S.set.base==="incl"?"標價小計":"退稅後金額"} × <b>本筆</b>代購匯率</span></div>
-      <div class="row dep"><span class="lab">訂金</span><i class="dots"></i><span class="val">跟客人收 × ${S.set.depositPct}%</span></div>
-      <div class="row bal"><span class="lab">尾款</span><i class="dots"></i><span class="val">跟客人收 − 訂金</span></div>
       <div class="row total"><span class="lab">賺</span><i class="dots"></i><span class="val">跟客人收 − 我的成本</span></div>
-      <p class="hint" style="margin:12px 0 0">退稅、實收、訂金都可以在單筆裡手動覆寫，填了就以你填的為準。</p>
+      <p class="hint" style="margin:14px 0 6px"><b>成本的四種來源</b>，由準到粗，有哪個就用哪個：</p>
+      <div class="row actual"><span class="lab">1　單品刷卡台幣</span><i class="dots"></i><span class="val">在商品裡填了「刷卡帳單 NT$」</span></div>
+      <div class="row actual"><span class="lab">2　結帳單分攤</span><i class="dots"></i><span class="val">整張發票的刷卡台幣＋手續費，依標價比例分到每項</span></div>
+      <div class="row"><span class="lab">3　實付日幣換算</span><i class="dots"></i><span class="val">實付 ¥ × <b>本筆</b>實際匯率 × (1 + ${S.set.cardFeePct}% 手續費)</span></div>
+      <div class="row"><span class="lab">4　標價推估</span><i class="dots"></i><span class="val">(標價小計 − 退稅) × 實際匯率 × (1 + ${S.set.cardFeePct}%)</span></div>
+      <p class="hint" style="margin:12px 0 0">店家結帳是一張發票一次刷，不是一件一件刷，所以成本請走「採購」頁的<b>結帳</b>功能：勾選這張發票買了哪些、填實付日幣，卡單出來再補台幣和手續費。</p>
     </section>`;
 
   document.getElementById("applyRate").onclick=()=>{
-    const t=S.items.filter(i=>!i.rateLocked && ["deposit_wait","todo"].includes(i.state));
+    const t=S.items.filter(i=>{
+      if(i.state!=="todo") return false;
+      if(i.kind==="self") return true;
+      const o=orderOf(i); return !(o&&o.depPaid);
+    });
     if(!t.length){ toast("沒有未鎖定的項目"); return; }
     if(!confirm("把 "+t.length+" 筆未鎖定項目的匯率改成 代購 "+S.set.rateSell+" ／ 實際 "+S.set.rateReal+" ？")) return;
     t.forEach(i=>{ i.rateSell=S.set.rateSell; i.rateReal=S.set.rateReal; cloudPut(i); });
@@ -1774,6 +2298,23 @@ function renderSettings(){
     if(!chk.items.length){ showImp("✗ 沒有可匯入的資料"); return; }
     if(!confirm("匯入 "+chk.items.length+" 筆？會加在現有清單後面，不會覆蓋既有資料。")) return;
     const r=importRows(ib().value,false);
+    /* 把每一列帶的訂金狀態收斂成「一位客人一張訂單」 */
+    const touched={};
+    r.items.forEach(i=>{
+      if(i.kind==="buy"){
+        const o=getOrder(i.tripId,i.customer||"");
+        const t=touched[o.id]=touched[o.id]||{o,dep:0,anyDep:false,allBal:true,n:0};
+        t.n++;
+        if(i._depPaid){ t.anyDep=true; if(i._depOv!=null) t.dep+=i._depOv; }
+        if(!i._balPaid) t.allBal=false;
+      }
+      delete i._depPaid; delete i._balPaid; delete i._depOv;
+    });
+    Object.values(touched).forEach(t=>{
+      if(t.anyDep && !t.o.depPaid){ t.o.depPaid=true; t.o.depPaidAt=today(); if(t.dep>0) t.o.depAmt=Math.round(t.dep); }
+      if(t.allBal && t.n) t.o.balPaid=true;
+      cloudPutOrder(t.o);
+    });
     S.items=r.items.concat(S.items);
     save(); rateNote(); render();
     r.items.forEach(i=>cloudPut(i));
@@ -1781,11 +2322,19 @@ function renderSettings(){
     renderSettings(); toast("已匯入 "+r.items.length+" 筆");
   });
 
+  const bl=document.getElementById("bmLink");
+  if(bl){
+    bl.setAttribute("href",bookmarklet());
+    bl.onclick=e=>{ e.preventDefault(); toast("請把這顆按鈕「拖」到書籤列，或按右邊複製網址"); };
+  }
+  bind("bmCopy",()=>copyText(bookmarklet(),"已複製，照下面的步驟貼進書籤的網址欄"));
+
   document.getElementById("expBtn").onclick=exportBackup;
 
   const tb=()=>document.getElementById("txtBox");
   document.getElementById("genTxt").onclick=()=>{
-    const slim={v:2, set:S.set, trips:S.trips, items:S.items.map(it=>{const o={...it}; delete o.img; return o;})};
+    const slim={v:3, set:S.set, trips:S.trips, orders:S.orders, checkouts:S.checkouts,
+                items:S.items.map(it=>{const o={...it}; delete o.img; return o;})};
     tb().value=JSON.stringify(slim);
     const n=S.items.filter(i=>i.img).length;
     toast("已產生 "+S.items.length+" 筆"+(n?`（略過 ${n} 張圖）`:""));
@@ -1805,6 +2354,9 @@ function renderSettings(){
     if(!confirm("用這段文字取代這台裝置目前的 "+S.items.length+" 筆資料？建議先匯出備份。")) return;
     S.items=d.items; S.set={...DEF_SET,...(d.set||{})};
     if(Array.isArray(d.trips)) S.trips=d.trips;
+    S.orders=Array.isArray(d.orders)?d.orders:[];
+    S.checkouts=Array.isArray(d.checkouts)?d.checkouts:[];
+    migrateOrders();
     save(); rateNote(); render(); renderSettings(); uploadAll(); toast("已還原 "+d.items.length+" 筆");
   };
   document.getElementById("impFile").onchange=e=>{
@@ -1816,6 +2368,9 @@ function renderSettings(){
         if(!Array.isArray(d.items)) throw 0;
         S.items=d.items; S.set={...DEF_SET,...(d.set||{})};
         if(Array.isArray(d.trips)) S.trips=d.trips;
+        S.orders=Array.isArray(d.orders)?d.orders:[];
+        S.checkouts=Array.isArray(d.checkouts)?d.checkouts:[];
+        migrateOrders();
         S.cur=d.cur||S.cur;
         S.meta={backupAt:Date.now(), backupCount:d.items.length, ...(d.meta||{})};
         save(); rateNote(); render(); renderSettings(); uploadAll(); toast("已匯入 "+d.items.length+" 筆");
@@ -1825,26 +2380,96 @@ function renderSettings(){
   };
   document.getElementById("wipeBtn").onclick=()=>{
     if(confirm("清空全部商品與設定？建議先匯出備份。")){
-      const olds=S.items.map(i=>i.id);
-      const oldt=S.trips.map(t=>t.id);
-      S={items:[],trips:[],cur:"all",set:{...DEF_SET},meta:{backupAt:0,backupCount:0}}; save();
-      olds.forEach(id=>cloudDel(id)); oldt.forEach(id=>cloudDelTrip(id)); rateNote(); render(); renderSettings(); toast("已清空");
+      const olds=S.items.map(i=>i.id), oldt=S.trips.map(t=>t.id);
+      const oldo=S.orders.map(o=>o.id), oldc=S.checkouts.map(c=>c.id);
+      S={items:[],trips:[],orders:[],checkouts:[],cur:"all",set:{...DEF_SET},meta:{backupAt:0,backupCount:0}}; save();
+      olds.forEach(id=>cloudDel(id)); oldt.forEach(id=>cloudDelTrip(id));
+      oldo.forEach(id=>cloudDelOrder(id)); oldc.forEach(id=>cloudDelCo(id));
+      rateNote(); render(); renderSettings(); toast("已清空");
     }
   };
 }
+/* 訂金還沒收的代購、以及自購，匯率都還能重新套用 */
 function unlockedCount(){
-  return S.items.filter(i=>!i.rateLocked && ["deposit_wait","todo"].includes(i.state)).length;
+  return S.items.filter(i=>{
+    if(i.state!=="todo") return false;
+    if(i.kind==="self") return true;
+    const o=orderOf(i); return !(o&&o.depPaid);
+  }).length;
 }
 function sizeNote(){
   try{ const b=new Blob([JSON.stringify(S)]).size; return b>1048576?(b/1048576).toFixed(1)+" MB":Math.round(b/1024)+" KB"; }
   catch(e){ return "—"; }
 }
 
+/* ---------- 商品頁一鍵帶入 ---------- */
+function bookmarklet(){
+  const app=location.href.split("#")[0];
+  const code=`(function(){
+    var m=function(s){var e=document.querySelector(s);return e?(e.getAttribute('content')||e.content||e.textContent||''):''};
+    var t=(m('meta[property="og:title"]')||document.title||'').trim();
+    var img=m('meta[property="og:image"]')||'';
+    var txt=(document.body?(document.body.innerText||document.body.textContent||''):'');
+    var p='';
+    var r=txt.match(/[¥￥]\\s?([0-9][0-9,]{2,})|([0-9][0-9,]{2,})\\s*円/);
+    if(r)p=(r[1]||r[2]||'').replace(/,/g,'');
+    var ja=/[\\u3040-\\u30ff\\u4e00-\\u9fff]/.test(t)?t:'';
+    var d={n:t,j:ja,p:p,u:location.href,i:img};
+    location.href='${app}#add='+encodeURIComponent(JSON.stringify(d));
+  })()`.replace(/\s*\n\s*/g," ");
+  return "javascript:"+encodeURIComponent(code);
+}
+function quickAdd(raw){
+  let d; try{ d=JSON.parse(decodeURIComponent(raw)); }catch(e){ return false; }
+  if(!d||!d.n) return false;
+  if(!S.trips.length && !newTrip()) return false;
+  document.querySelector('.tab[data-view="list"]').click();
+  openSheet(null);
+  form.elements.nameZh.value=String(d.n).slice(0,120);
+  if(d.j) form.elements.nameJa.value=String(d.j).slice(0,120);
+  if(d.p) form.elements.price.value=+String(d.p).replace(/[^\d]/g,"")||"";
+  if(d.u) form.elements.url.value=d.u;
+  if(d.i && /^https?:\/\//.test(d.i)) fetchThumb(d.i);
+  updateCalc();
+  toast(d.p?"已帶入商品資料，補一下客人和數量":"抓不到價格，請手動填");
+  return true;
+}
+/* 商品圖另外抓：跨網域的圖很多會擋，抓不到就算了 */
+function fetchThumb(url){
+  const im=new Image();
+  im.crossOrigin="anonymous";
+  im.onload=()=>{
+    try{
+      const max=320, sc=Math.min(1,max/Math.max(im.width,im.height));
+      const c=document.createElement("canvas");
+      c.width=Math.round(im.width*sc); c.height=Math.round(im.height*sc);
+      c.getContext("2d").drawImage(im,0,0,c.width,c.height);
+      pendingImg=c.toDataURL("image/jpeg",0.68); paintImg();
+    }catch(e){ /* 被 CORS 擋住，略過 */ }
+  };
+  im.onerror=()=>{};
+  im.src=url;
+}
+function checkHash(){
+  const h=location.hash||"";
+  const m=h.match(/^#add=(.+)$/);
+  if(!m) return;
+  history.replaceState(null,"",location.pathname+location.search);
+  quickAdd(m[1]);
+}
+window.addEventListener("hashchange",checkHash);
+
 /* ---------- 分頁 ---------- */
+let curView="list";
+function repaintTab(){
+  if(curView==="buy") renderBuy();
+  else if(curView==="ledger") renderLedger();
+  else if(curView==="settings") renderSettings();
+}
 document.querySelectorAll(".tab").forEach(t=>{
   t.onclick=()=>{
     document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected",String(x===t)));
-    const v=t.dataset.view;
+    const v=t.dataset.view; curView=v;
     document.getElementById("viewList").classList.toggle("hide",v!=="list");
     document.getElementById("viewBuy").classList.toggle("hide",v!=="buy");
     document.getElementById("viewLedger").classList.toggle("hide",v!=="ledger");
@@ -1883,7 +2508,7 @@ function rateNote(){
 /* ================= Firebase 同步（選用） =================
    沒設定或沒登入時，整個工具就是純本機版，功能不受影響。
    設定後：Firestore 的離線快取會在沒網路時先存本機，連上網自動補傳。 */
-let FB=null, UID=null, unsubItems=null, unsubMeta=null, unsubTrips=null, firstSnap=true, fbState="off";
+let FB=null, UID=null, unsubItems=null, unsubMeta=null, unsubTrips=null, unsubOrders=null, unsubCos=null, firstSnap=true, fbState="off";
 let lastErr="", loadTimer=null, fallbackTimer=null, gotSnap=false;
 function noteErr(where,e){
   lastErr=where+"："+(e&&(e.code||e.message)||e||"未知錯誤");
@@ -2024,6 +2649,8 @@ function stopSync(){
   if(unsubItems){unsubItems();unsubItems=null;}
   if(unsubMeta){unsubMeta();unsubMeta=null;}
   if(unsubTrips){unsubTrips();unsubTrips=null;}
+  if(unsubOrders){unsubOrders();unsubOrders=null;}
+  if(unsubCos){unsubCos();unsubCos=null;}
 }
 function startSync(){
   const {F,db}=FB; stopSync(); gotSnap=false;
@@ -2049,6 +2676,16 @@ function startSync(){
     const cloud=snap.docs.map(d=>d.data());
     if(cloud.length){ S.trips=cloud; migrateTrips(); persist(); render(); }
   },e=>noteErr("讀取檔期",e));
+
+  unsubOrders=F.onSnapshot(F.collection(db,"users",UID,"orders"),snap=>{
+    const cloud=snap.docs.map(d=>d.data());
+    if(cloud.length){ S.orders=cloud; persist(); render(); repaintTab(); }
+  },e=>noteErr("讀取客人訂單",e));
+
+  unsubCos=F.onSnapshot(F.collection(db,"users",UID,"checkouts"),snap=>{
+    const cloud=snap.docs.map(d=>d.data());
+    if(cloud.length){ S.checkouts=cloud; persist(); render(); repaintTab(); }
+  },e=>noteErr("讀取結帳單",e));
 
   unsubItems=F.onSnapshot(F.collection(db,"users",UID,"items"),snap=>{
     clearTimeout(loadTimer);
@@ -2101,6 +2738,14 @@ async function uploadAll(){
     try{ await F.setDoc(F.doc(db,"users",UID,"items",it.id),body); okI++; }
     catch(e){ fail.push("「"+(it.nameZh||it.id)+"」："+(e.code||e.message)); }
   }
+  for(const o of S.orders){
+    try{ await F.setDoc(F.doc(db,"users",UID,"orders",o.id),clean(o)); }
+    catch(e){ fail.push("訂單「"+(o.customer||o.id)+"」："+(e.code||e.message)); }
+  }
+  for(const c of S.checkouts){
+    try{ await F.setDoc(F.doc(db,"users",UID,"checkouts",c.id),clean(c)); }
+    catch(e){ fail.push("結帳單「"+(c.store||c.id)+"」："+(e.code||e.message)); }
+  }
   try{ await cloudSettings(); }catch(e){ fail.push("設定："+(e.code||e.message)); }
   if(fail.length){
     lastErr="上傳問題 "+fail.length+" 項｜"+fail.slice(0,4).join("　/　");
@@ -2120,6 +2765,24 @@ async function cloudPut(it){
 async function cloudDel(id){
   if(!UID||!id) return;
   try{ await FB.F.deleteDoc(FB.F.doc(FB.db,"users",UID,"items",id)); }catch(e){ console.warn(e); }
+}
+async function cloudPutOrder(o){
+  if(!UID||!o) return;
+  try{ await FB.F.setDoc(FB.F.doc(FB.db,"users",UID,"orders",o.id),clean(o)); }
+  catch(e){ noteErr("上傳訂單「"+(o.customer||o.id)+"」",e); }
+}
+async function cloudDelOrder(id){
+  if(!UID||!id) return;
+  try{ await FB.F.deleteDoc(FB.F.doc(FB.db,"users",UID,"orders",id)); }catch(e){ console.warn(e); }
+}
+async function cloudPutCo(c){
+  if(!UID||!c) return;
+  try{ await FB.F.setDoc(FB.F.doc(FB.db,"users",UID,"checkouts",c.id),clean(c)); }
+  catch(e){ noteErr("上傳結帳單「"+(c.store||c.id)+"」",e); }
+}
+async function cloudDelCo(id){
+  if(!UID||!id) return;
+  try{ await FB.F.deleteDoc(FB.F.doc(FB.db,"users",UID,"checkouts",id)); }catch(e){ console.warn(e); }
 }
 async function cloudPutTrip(t){
   if(!UID||!t) return;
@@ -2226,13 +2889,18 @@ function demo(){
     S.cur="demoTrip";
   }
   const TID=S.cur==="all"?S.trips[0].id:S.cur;
-  const base={taxOv:null,chargeOv:null,depOv:null,paidYen:null,cardTwd:null,img:null,rateReal:0.215};
+  const base={taxOv:null,chargeOv:null,paidYen:null,cardTwd:null,img:null,rateReal:0.215};
   S.items=[
-    {id:"d1",ts:now,nameZh:"樂敦 肌研極潤 化妝水",nameJa:"肌ラボ 極潤 化粧水",spec:"170mL",qty:3,kind:"buy",customer:"小美",store:"マツモトキヨシ",category:"藥妝",price:880,state:"deposit_paid",tripId:TID,depTaken:true,rateSell:0.228,rateLocked:true,orderDate:"2026-09-18",note:"客人指定無香料版",...base},
-    {id:"d4",ts:now-1,nameZh:"DHC 維他命 C",nameJa:"DHC ビタミンC",spec:"60 日份",qty:4,kind:"buy",customer:"小美",store:"マツモトキヨシ",category:"保健",price:760,state:"deposit_wait",tripId:TID,depTaken:false,rateSell:0.232,rateLocked:false,orderDate:"2026-09-22",note:"訂金還沒進來，匯率可再調",...base},
-    {id:"d2",ts:now-2,nameZh:"ROIHI 撒隆巴斯溫感貼布",nameJa:"ロイヒつぼ膏",spec:"156 枚",qty:2,kind:"buy",customer:"阿姨",store:"ドン・キホーテ",category:"藥妝",price:1480,state:"bought",tripId:TID,depTaken:true,rateSell:0.225,rateLocked:true,orderDate:"2026-09-10",note:"",...base},
-    {id:"d3",ts:now-3,nameZh:"白色戀人餅乾",nameJa:"白い恋人",spec:"24 枚入",qty:1,kind:"self",customer:"",store:"新千歳空港",category:"食品",price:1620,state:"todo",tripId:TID,depTaken:false,rateSell:0.23,rateLocked:false,orderDate:"2026-09-22",note:"自己吃",...base}
+    {id:"d1",ts:now,nameZh:"樂敦 肌研極潤 化妝水",nameJa:"肌ラボ 極潤 化粧水",spec:"170mL",qty:3,kind:"buy",customer:"小美",store:"マツモトキヨシ",category:"藥妝",price:880,state:"bought",tripId:TID,rateSell:0.228,orderDate:"2026-09-18",note:"客人指定無香料版",...base},
+    {id:"d4",ts:now-1,nameZh:"DHC 維他命 C",nameJa:"DHC ビタミンC",spec:"60 日份",qty:4,kind:"buy",customer:"小美",store:"マツモトキヨシ",category:"保健",price:760,state:"todo",tripId:TID,rateSell:0.228,orderDate:"2026-09-22",note:"",...base},
+    {id:"d2",ts:now-2,nameZh:"ROIHI 撒隆巴斯溫感貼布",nameJa:"ロイヒつぼ膏",spec:"156 枚",qty:2,kind:"buy",customer:"阿姨",store:"ドン・キホーテ",category:"藥妝",price:1480,state:"todo",tripId:TID,rateSell:0.225,orderDate:"2026-09-10",note:"訂金還沒進來",...base},
+    {id:"d3",ts:now-3,nameZh:"白色戀人餅乾",nameJa:"白い恋人",spec:"24 枚入",qty:1,kind:"self",customer:"",store:"新千歳空港",category:"食品",price:1620,state:"todo",tripId:TID,rateSell:0.23,orderDate:"2026-09-22",note:"自己吃",...base}
   ];
+  S.orders=[
+    {id:"do1",tripId:TID,customer:"小美",depAmt:1200,depPaid:true,depPaidAt:"2026-09-18",balPaid:false,balPaidAt:"",refunded:false,note:""},
+    {id:"do2",tripId:TID,customer:"阿姨",depAmt:null,depPaid:false,depPaidAt:"",balPaid:false,balPaidAt:"",refunded:false,note:""}
+  ];
+  S.checkouts=[];
   save(); render(); uploadAll(); toast("已載入範例，可直接編輯或刪除");
 }
 
@@ -2249,6 +2917,8 @@ document.getElementById("cloudBtn").onclick=()=>{
   if(fbState==="ready") cloudSignIn();
   else document.querySelector('.tab[data-view="settings"]').click();
 };
+
+checkHash();
 
 /* 設定已經寫在檔案裡時，不必等 fb-ready 之外的動作 */
 if(window.__FB) cloudInit();
